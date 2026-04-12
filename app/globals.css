@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-cream text-ink antialiased;
+  background-image:
+    radial-gradient(circle at 10% 6%, rgba(255, 159, 193, 0.36), transparent 22%),
+    radial-gradient(circle at 92% 8%, rgba(125, 205, 255, 0.4), transparent 22%),
+    radial-gradient(circle at 18% 92%, rgba(123, 227, 179, 0.28), transparent 20%),
+    radial-gradient(circle at 75% 82%, rgba(255, 226, 92, 0.3), transparent 18%),
+    linear-gradient(180deg, #fffdf7 0%, #fff3bf 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.paper-card {
+  @apply rounded-4xl border-2 border-softline bg-paper shadow-note;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 250, 241, 0.92)),
+    repeating-linear-gradient(
+      -6deg,
+      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.28) 10px,
+      rgba(255, 238, 198, 0.22) 10px,
+      rgba(255, 238, 198, 0.22) 20px
+    );
+}
+
+.section-title {
+  @apply text-lg font-semibold tracking-tight text-ink;
+}
+
+.section-subtitle {
+  @apply text-sm text-ink/70;
+}
+
+.scribble-border {
+  border-style: dashed;
+  border-width: 3px;
+  border-radius: 28px;
+  border-color: rgba(255, 178, 77, 0.7);
+  box-shadow: 0 10px 22px rgba(255, 178, 77, 0.12);
+}
+
+.map-dot {
+  @apply absolute h-5 w-5 rounded-full border-4 border-paper shadow-sticker;
+}
+
+.playful-pill {
+  @apply rounded-full border-2 border-white/70 shadow-sticker;
+}
