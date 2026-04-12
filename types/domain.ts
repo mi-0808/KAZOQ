@@ -129,3 +129,29 @@ export interface HomeShortcut {
   description: string;
   href: string;
 }
+
+export type FamilyReportKind = "ご飯連絡" | "欠食届" | "外泊届" | "お迎え相談" | "帰宅連絡";
+
+export type FamilyReportStatus = "確認待ち" | "進行中" | "完了";
+
+export interface FamilyReportAction {
+  id: string;
+  parentId?: string;
+  authorId: string;
+  label: string;
+  body: string;
+  createdAt: string;
+  tone?: "info" | "request" | "response" | "done";
+}
+
+export interface FamilyReportThread {
+  id: string;
+  familyId: string;
+  kind: FamilyReportKind;
+  title: string;
+  summary: string;
+  status: FamilyReportStatus;
+  createdAt: string;
+  requiresResponse: boolean;
+  actions: FamilyReportAction[];
+}

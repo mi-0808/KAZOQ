@@ -1,3 +1,5 @@
+"use client";
+
 import { Heart, NotebookPen, SmilePlus } from "lucide-react";
 import { diaryEntries, profiles } from "@/data/mock-data";
 import { Chip } from "@/components/shared/chip";

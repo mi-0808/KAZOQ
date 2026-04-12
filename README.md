@@ -1,6 +1,6 @@
-# 家族共有アプリ MVP
+# KAZOQ MVP
 
-家族向けの「連絡ノート・予定帳・交換日記・見守り」をひとつにまとめた生活連携アプリです。  
+KAZOQ（カゾック）は、家族向けの「連絡ノート・予定帳・交換日記・見守り」をひとつにまとめた生活連携アプリです。  
 Next.js App Router、TypeScript、Tailwind CSS、Supabase を前提に、まずはダミーデータで画面を成立させ、そのまま Supabase 連携へ拡張しやすい構成で実装しています。
 
 ## 1. 要件の簡易整理
@@ -92,6 +92,7 @@ supabase/
 ## 6. 今後の拡張ポイント
 
 - メッセージ種別追加: `message_templates` と `payload` で吸収
+- 報連相ツリー: `family_reports` と `family_report_actions` で家庭内承認フローを追加済み
 - 家事タスク管理: `tasks` と `task_logs` を追加しやすい timeline 拡張
 - 公開範囲付き日記: `diary_entries.visibility_scope` を追加
 - 通知優先度: `notifications.priority` を別テーブルで追加
@@ -108,3 +109,4 @@ supabase/
 
 - この段階ではダミーデータを優先し、UI の完成度と構造整理を重視しています
 - Supabase 連携時は `mock-data.ts` を repository 層へ置き換える形を想定しています
+- `home` と `reports` は Supabase 未設定時にモック、設定済みなら Repository 経由でDBを読む構成です

@@ -1,3 +1,5 @@
+"use client";
+
 import { MapPinned, Navigation, Plus, Radar } from "lucide-react";
 import { familyLocations, places, profiles, schedules } from "@/data/mock-data";
 import { SectionCard } from "@/components/shared/section-card";

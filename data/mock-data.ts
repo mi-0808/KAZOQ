@@ -2,6 +2,7 @@ import {
   DiaryEntry,
   Family,
   FamilyLocation,
+  FamilyReportThread,
   HomeShortcut,
   Message,
   PlaceRegistration,
@@ -238,9 +239,108 @@ export const diaryEntries: DiaryEntry[] = [
   }
 ];
 
+export const familyReports: FamilyReportThread[] = [
+  {
+    id: "fr1",
+    familyId: "f1",
+    kind: "ご飯連絡",
+    title: "今夜のご飯 参加確認",
+    summary: "ご飯ができた連絡に対して、食べる・取り置き・いらないの返答をツリーで確認しています。",
+    status: "進行中",
+    createdAt: "18:08",
+    requiresResponse: true,
+    actions: [
+      {
+        id: "fra1",
+        authorId: "u1",
+        label: "ご飯できました",
+        body: "19:15から食べられます。遅い人は取り置きできます。",
+        createdAt: "18:08",
+        tone: "info"
+      },
+      {
+        id: "fra2",
+        parentId: "fra1",
+        authorId: "u3",
+        label: "取り置き希望",
+        body: "部活がのびたので先に取っておいてください。",
+        createdAt: "18:11",
+        tone: "response"
+      },
+      {
+        id: "fra3",
+        parentId: "fra2",
+        authorId: "u1",
+        label: "対応済み",
+        body: "了解です。温め直しできるようにしておきます。",
+        createdAt: "18:12",
+        tone: "done"
+      }
+    ]
+  },
+  {
+    id: "fr2",
+    familyId: "f1",
+    kind: "外泊届",
+    title: "土曜の外泊届",
+    summary: "友だち宅への宿泊希望。保護者確認と送迎時間の整理が必要です。",
+    status: "確認待ち",
+    createdAt: "17:30",
+    requiresResponse: true,
+    actions: [
+      {
+        id: "frb1",
+        authorId: "u3",
+        label: "外泊希望",
+        body: "土曜に美咲ちゃんの家へ泊まってもいいですか。朝の部活集合が早いです。",
+        createdAt: "17:30",
+        tone: "request"
+      },
+      {
+        id: "frb2",
+        parentId: "frb1",
+        authorId: "u2",
+        label: "確認中",
+        body: "連絡先と送迎時間を確認して返事します。",
+        createdAt: "17:42",
+        tone: "response"
+      }
+    ]
+  },
+  {
+    id: "fr3",
+    familyId: "f1",
+    kind: "欠食届",
+    title: "お父さんの欠食届",
+    summary: "会食で夕飯不要。ご飯量の調整に使える家庭内届出です。",
+    status: "完了",
+    createdAt: "12:10",
+    requiresResponse: false,
+    actions: [
+      {
+        id: "frc1",
+        authorId: "u2",
+        label: "夕飯不要",
+        body: "今日は会食があるので夕飯はいりません。",
+        createdAt: "12:10",
+        tone: "info"
+      },
+      {
+        id: "frc2",
+        parentId: "frc1",
+        authorId: "u1",
+        label: "了解",
+        body: "ありがとう。1人分減らして準備します。",
+        createdAt: "12:18",
+        tone: "done"
+      }
+    ]
+  }
+];
+
 export const shortcuts: HomeShortcut[] = [
-  { id: "sc1", label: "ご飯を投稿", description: "今日のご飯をテンプレで共有", href: "/messages" },
+  { id: "sc1", label: "報連相を出す", description: "欠食届や外泊届をツリーで共有", href: "/reports" },
   { id: "sc2", label: "予定を追加", description: "学校や通院予定を記録", href: "/calendar" },
-  { id: "sc3", label: "日記を書く", description: "気分と今日のことを残す", href: "/diary" },
+  { id: "sc3", label: "ご飯を投稿", description: "今日のご飯をテンプレで共有", href: "/messages" },
   { id: "sc4", label: "場所を確認", description: "家族の位置と登録地点を見る", href: "/locations" }
 ];

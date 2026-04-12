@@ -1,0 +1,43 @@
+import { cookies } from "next/headers";
+
+export type AppMode = "auto" | "demo" | "live";
+
+export const APP_MODE_COOKIE = "kazoq-mode";
+
+export function isSupabaseConfigured() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
+
+export function normalizeAppMode(value?: string | null): AppMode {
+  if (value === "demo" || value === "live" || value === "auto") {
+    return value;
+  }
+
+  return "auto";
+}
+
+export function resolveAppMode(preferredMode?: string | null): Exclude<AppMode, "auto"> {
+  const requestedMode = normalizeAppMode(preferredMode);
+
+  if (requestedMode !== "auto") {
+    return requestedMode;
+  }
+
+  const configuredMode = normalizeAppMode(process.env.NEXT_PUBLIC_DEFAULT_APP_MODE);
+
+  if (configuredMode !== "auto") {
+    return configuredMode;
+  }
+
+  return isSupabaseConfigured() ? "live" : "demo";
+}
+
+export async function getServerAppMode() {
+  const cookieStore = await cookies();
+
+  return resolveAppMode(cookieStore.get(APP_MODE_COOKIE)?.value);
+}
+
+export async function shouldUseDemoData() {
+  return (await getServerAppMode()) === "demo";
+}

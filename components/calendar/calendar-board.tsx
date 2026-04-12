@@ -1,3 +1,5 @@
+"use client";
+
 import { CalendarPlus2, Clock3, MapPinned } from "lucide-react";
 import { places, profiles, schedules } from "@/data/mock-data";
 import { Chip } from "@/components/shared/chip";

@@ -1,3 +1,5 @@
+"use client";
+
 import { Bell, LayoutPanelTop, ShieldCheck, SlidersHorizontal, UsersRound } from "lucide-react";
 import { SectionCard } from "@/components/shared/section-card";
 
