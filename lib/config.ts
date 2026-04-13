@@ -19,6 +19,11 @@ export function normalizeAppMode(value?: string | null): AppMode {
 export function resolveAppMode(preferredMode?: string | null): Exclude<AppMode, "auto"> {
   const requestedMode = normalizeAppMode(preferredMode);
 
+  // If Supabase is configured, prefer live mode over a stale demo cookie.
+  if (requestedMode === "demo" && isSupabaseConfigured()) {
+    return "live";
+  }
+
   if (requestedMode !== "auto") {
     return requestedMode;
   }

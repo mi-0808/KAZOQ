@@ -1,12 +1,25 @@
 "use client";
 
-import { HeartHandshake, KeyRound, Mail, Users } from "lucide-react";
+import { CheckCircle2, HeartHandshake, KeyRound, LockKeyhole, Mail, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createFamilyRoomAction, joinFamilyAction, quickDemoLoginAction, signInAction, signUpAction } from "@/app/(auth)/auth/actions";
 import { defaultFamilyPreferences, favoriteFeatureOptions, menuItemOptions, shortcutOptions } from "@/lib/family-preferences";
 
-export function AuthScreen() {
+export function AuthScreen({
+  isSignedIn,
+  hasFamilyRoom,
+  accountLabel,
+  errorMessage
+}: {
+  isSignedIn: boolean;
+  hasFamilyRoom: boolean;
+  accountLabel?: string;
+  errorMessage?: string;
+}) {
+  const isStepOneDone = isSignedIn;
+  const familyFormsEnabled = isSignedIn && !hasFamilyRoom;
+
   return (
     <div className="min-h-screen bg-board-pattern px-4 py-8">
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -54,11 +67,39 @@ export function AuthScreen() {
 
         <section className="paper-card p-6 sm:p-8">
           <div className="space-y-6">
-            <div id="login">
-              <h2 className="text-2xl font-bold">ログイン</h2>
-              <p className="mt-1 text-sm text-ink/70">KAZOQ に入って、家族の今日をひと目で確認できます。</p>
+            {errorMessage ? (
+              <div className="rounded-3xl border border-coral/25 bg-coral/10 px-4 py-3 text-sm font-medium text-ink">
+                {errorMessage}
+              </div>
+            ) : null}
+            <div className="rounded-4xl bg-cream p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className={`rounded-3xl px-4 py-4 ${isStepOneDone ? "bg-white" : "bg-white/70"}`}>
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    {isStepOneDone ? <CheckCircle2 className="h-4 w-4 text-coral" /> : <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-coral text-xs font-bold text-white">1</span>}
+                    アカウント作成
+                  </div>
+                  <p className="mt-2 text-sm text-ink/70">
+                    {isStepOneDone ? `${accountLabel ?? "登録済みアカウント"} でログイン済みです。` : "まず表示名・メール・パスワードを登録します。"}
+                  </p>
+                </div>
+                <div className={`rounded-3xl px-4 py-4 ${familyFormsEnabled ? "bg-white" : "bg-white/70"}`}>
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    {familyFormsEnabled ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-coral text-xs font-bold text-white">2</span> : <LockKeyhole className="h-4 w-4 text-ink/50" />}
+                    家族ルーム作成
+                  </div>
+                  <p className="mt-2 text-sm text-ink/70">
+                    {familyFormsEnabled ? "次に家族ルームを作るか、招待コードで参加します。" : "ステップ1が終わるとここが入力できるようになります。"}
+                  </p>
+                </div>
+              </div>
             </div>
-            <form className="space-y-4">
+
+            <div id="login">
+              <h2 className="text-2xl font-bold">ステップ1. アカウントを作成</h2>
+              <p className="mt-1 text-sm text-ink/70">見た目はそのままに、先にアカウント作成、そのあと家族ルーム作成の順で進めます。</p>
+            </div>
+            <form className={`space-y-4 ${isStepOneDone ? "opacity-75" : ""}`}>
               <label className="block">
                 <span className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <Users className="h-4 w-4" />
@@ -90,16 +131,17 @@ export function AuthScreen() {
                   ログインして続ける
                 </button>
                 <button formAction={signUpAction} className="w-full rounded-3xl bg-white px-4 py-3 text-base font-semibold text-ink shadow-sticker">
-                  新規登録する
+                  新規登録して次へ
                 </button>
               </div>
             </form>
 
-            <form action={createFamilyRoomAction} className="rounded-4xl bg-white p-5">
+            <form action={createFamilyRoomAction} className={`rounded-4xl bg-white p-5 transition ${familyFormsEnabled ? "opacity-100" : "pointer-events-none opacity-50"}`}>
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <HeartHandshake className="h-4 w-4" />
-                家族ルームを作る
+                ステップ2. 家族ルームを作る
               </div>
+              {!familyFormsEnabled ? <p className="mt-2 text-sm text-ink/65">先に上のアカウント作成を完了すると、このまま続けて家族ルームを作成できます。</p> : null}
               <div className="mt-3 grid gap-3">
                 <input name="familyName" className="rounded-3xl border border-softline bg-paper px-4 py-3 outline-none" placeholder="例: さくら家" />
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -187,11 +229,12 @@ export function AuthScreen() {
               </div>
             </form>
 
-            <form action={joinFamilyAction} className="rounded-4xl bg-cream p-5" id="join">
+            <form action={joinFamilyAction} className={`rounded-4xl bg-cream p-5 transition ${familyFormsEnabled ? "opacity-100" : "pointer-events-none opacity-50"}`} id="join">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <Users className="h-4 w-4" />
-                家族グループへ参加
+                または招待コードで参加
               </div>
+              {!familyFormsEnabled ? <p className="mt-2 text-sm text-ink/65">ログイン後に、招待コードから家族グループへ参加できます。</p> : null}
               <div className="mt-3 grid gap-3">
                 <input name="inviteCode" className="flex-1 rounded-3xl border border-softline bg-white px-4 py-3 outline-none" placeholder="招待コードを入力" />
                 <div className="grid gap-3 sm:grid-cols-2">
