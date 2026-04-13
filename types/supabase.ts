@@ -26,6 +26,9 @@ export interface Database {
           name: string;
           invite_code: string;
           created_by: string | null;
+          menu_item_ids: string[];
+          shortcut_item_ids: string[];
+          favorite_item_ids: string[];
           created_at: string;
         };
         Insert: {
@@ -33,6 +36,9 @@ export interface Database {
           name: string;
           invite_code: string;
           created_by?: string | null;
+          menu_item_ids?: string[];
+          shortcut_item_ids?: string[];
+          favorite_item_ids?: string[];
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["families"]["Insert"]>;
@@ -185,6 +191,110 @@ export interface Database {
           ends_at: string;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          family_id: string;
+          owner_id?: string | null;
+          place_id?: string | null;
+          source_message_id?: string | null;
+          title: string;
+          type: string;
+          note?: string | null;
+          starts_at: string;
+          ends_at: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["schedules"]["Insert"]>;
+      };
+      place_registrations: {
+        Row: {
+          id: string;
+          family_id: string;
+          name: string;
+          category: string;
+          address: string | null;
+          lat: number | null;
+          lng: number | null;
+          color: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          family_id: string;
+          name: string;
+          category: string;
+          address?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          color?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["place_registrations"]["Insert"]>;
+      };
+      locations: {
+        Row: {
+          id: string;
+          user_id: string;
+          family_id: string;
+          place_id: string | null;
+          label: string | null;
+          lat: number | null;
+          lng: number | null;
+          captured_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          family_id: string;
+          place_id?: string | null;
+          label?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          captured_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["locations"]["Insert"]>;
+      };
+      diary_entries: {
+        Row: {
+          id: string;
+          family_id: string;
+          author_id: string;
+          mood: string;
+          today_story: string;
+          happy_moment: string | null;
+          concern: string | null;
+          message_to_family: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          family_id: string;
+          author_id: string;
+          mood: string;
+          today_story: string;
+          happy_moment?: string | null;
+          concern?: string | null;
+          message_to_family?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["diary_entries"]["Insert"]>;
+      };
+      diary_reactions: {
+        Row: {
+          id: string;
+          entry_id: string;
+          user_id: string;
+          emoji: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entry_id: string;
+          user_id: string;
+          emoji: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["diary_reactions"]["Insert"]>;
       };
     };
   };

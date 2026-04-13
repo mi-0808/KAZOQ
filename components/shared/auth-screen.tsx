@@ -4,6 +4,7 @@ import { HeartHandshake, KeyRound, Mail, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createFamilyRoomAction, joinFamilyAction, quickDemoLoginAction, signInAction, signUpAction } from "@/app/(auth)/auth/actions";
+import { defaultFamilyPreferences, favoriteFeatureOptions, menuItemOptions, shortcutOptions } from "@/lib/family-preferences";
 
 export function AuthScreen() {
   return (
@@ -113,6 +114,75 @@ export function AuthScreen() {
                 </div>
                 <input name="organization" className="rounded-3xl border border-softline bg-paper px-4 py-3 outline-none" placeholder="学校名や所属（任意）" />
                 <input name="status" className="rounded-3xl border border-softline bg-paper px-4 py-3 outline-none" placeholder="今日のひとこと（任意）" />
+                <div className="rounded-[28px] bg-cream p-4">
+                  <p className="text-sm font-semibold">初期オンボーディング</p>
+                  <p className="mt-1 text-sm text-ink/70">最初に使いやすいよう、ホームとメニューを家族向けに整えます。</p>
+
+                  <div className="mt-4 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold">メニューに出す機能</p>
+                      <div className="mt-2 grid gap-2">
+                        {menuItemOptions.map((item) => (
+                          <label key={item.id} className="flex items-start gap-3 rounded-3xl bg-white px-4 py-3">
+                            <input
+                              type="checkbox"
+                              name="menuItemIds"
+                              value={item.id}
+                              defaultChecked={defaultFamilyPreferences.menuItemIds.includes(item.id)}
+                              className="mt-1 h-4 w-4 accent-coral"
+                            />
+                            <span>
+                              <span className="block text-sm font-semibold">{item.label}</span>
+                              <span className="block text-sm text-ink/70">{item.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">ホームのショートカット</p>
+                      <div className="mt-2 grid gap-2">
+                        {shortcutOptions.map((item) => (
+                          <label key={item.id} className="flex items-start gap-3 rounded-3xl bg-white px-4 py-3">
+                            <input
+                              type="checkbox"
+                              name="shortcutItemIds"
+                              value={item.id}
+                              defaultChecked={defaultFamilyPreferences.shortcutItemIds.includes(item.id)}
+                              className="mt-1 h-4 w-4 accent-coral"
+                            />
+                            <span>
+                              <span className="block text-sm font-semibold">{item.label}</span>
+                              <span className="block text-sm text-ink/70">{item.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">よく使う機能</p>
+                      <div className="mt-2 grid gap-2">
+                        {favoriteFeatureOptions.map((item) => (
+                          <label key={item.id} className="flex items-start gap-3 rounded-3xl bg-white px-4 py-3">
+                            <input
+                              type="checkbox"
+                              name="favoriteItemIds"
+                              value={item.id}
+                              defaultChecked={defaultFamilyPreferences.favoriteItemIds.includes(item.id)}
+                              className="mt-1 h-4 w-4 accent-coral"
+                            />
+                            <span>
+                              <span className="block text-sm font-semibold">{item.label}</span>
+                              <span className="block text-sm text-ink/70">{item.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <button className="rounded-3xl bg-coral px-4 py-3 font-semibold text-white shadow-sticker">家族ルームを作成</button>
               </div>
             </form>

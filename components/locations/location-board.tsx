@@ -1,10 +1,10 @@
-"use client";
-
-import { MapPinned, Navigation, Plus, Radar } from "lucide-react";
-import { familyLocations, places, profiles, schedules } from "@/data/mock-data";
+import { Navigation, Plus, Radar } from "lucide-react";
 import { SectionCard } from "@/components/shared/section-card";
+import { LocationBoardData } from "@/lib/repositories/locations";
 
-export function LocationBoard() {
+export function LocationBoard({ data }: { data: LocationBoardData }) {
+  const { familyLocations, places, profiles, schedules } = data;
+
   return (
     <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
       <SectionCard
@@ -38,6 +38,9 @@ export function LocationBoard() {
       <div className="space-y-5">
         <SectionCard title="家族の位置" subtitle="見守り用途を意識したやさしい表示">
           <div className="space-y-3">
+            {familyLocations.length === 0 ? (
+              <div className="rounded-3xl bg-white px-4 py-6 text-sm text-ink/70">位置情報がまだありません。Supabase の `locations` にデータが入ると反映されます。</div>
+            ) : null}
             {familyLocations.map((location) => {
               const profile = profiles.find((item) => item.userId === location.userId);
               return (
@@ -61,6 +64,9 @@ export function LocationBoard() {
 
         <SectionCard title="登録地点" subtitle="学校・習い事・旅行先などを家族単位で管理">
           <div className="space-y-3">
+            {places.length === 0 ? (
+              <div className="rounded-3xl bg-white px-4 py-6 text-sm text-ink/70">登録地点がまだありません。`place_registrations` に追加するとここへ出ます。</div>
+            ) : null}
             {places.map((place) => (
               <div key={place.id} className="rounded-3xl bg-white px-4 py-4">
                 <div className="flex items-center gap-3">
@@ -75,6 +81,9 @@ export function LocationBoard() {
 
         <SectionCard title="予定と場所の連携" subtitle="カレンダーの予定から移動先を把握しやすく">
           <div className="space-y-3">
+            {schedules.length === 0 ? (
+              <div className="rounded-3xl bg-white px-4 py-6 text-sm text-ink/70">まだ予定がありません。予定と場所が紐づくとここで確認できます。</div>
+            ) : null}
             {schedules.map((schedule) => {
               const place = places.find((item) => item.id === schedule.placeId);
               return (

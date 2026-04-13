@@ -5,7 +5,7 @@ import { Chip } from "@/components/shared/chip";
 import { SectionCard } from "@/components/shared/section-card";
 
 export function HomeDashboard({ feed }: { feed: HomeFeed }) {
-  const { shortcuts, latestMessage, latestReport, reportPeek } = feed;
+  const { shortcuts, favoriteFeatures, latestMessage, latestReport, reportPeek } = feed;
 
   return (
     <div className="space-y-4">
@@ -48,6 +48,20 @@ export function HomeDashboard({ feed }: { feed: HomeFeed }) {
           </div>
         </SectionCard>
       </section>
+
+      <SectionCard
+        title="よく使う機能"
+        subtitle="家族ルーム作成時や設定画面から選んだ導線です"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          {favoriteFeatures.map((feature) => (
+            <Link key={feature.id} href={feature.href} className="rounded-3xl border border-softline/70 bg-white px-4 py-4 transition hover:bg-cream">
+              <p className="font-semibold">{feature.label}</p>
+              <p className="mt-2 text-sm leading-6 text-ink/75">{feature.description}</p>
+            </Link>
+          ))}
+        </div>
+      </SectionCard>
 
       <SectionCard
         title="報連相をちょっと見る"

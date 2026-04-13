@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { family } from "@/data/mock-data";
 import { isSupabaseConfigured } from "@/lib/config";
+import { sanitizeFamilyPreferences } from "@/lib/family-preferences";
 import { ensureAppUserFromSession, getCurrentAppContext } from "@/lib/repositories/app-context";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +18,10 @@ function normalizeText(value: FormDataEntryValue | null) {
 function createInviteCode(name: string) {
   const prefix = name.replace(/\s+/g, "").slice(0, 4).toUpperCase() || "KAZO";
   return `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function normalizeMultiSelect(formData: FormData, key: string) {
+  return formData.getAll(key).filter((value): value is string => typeof value === "string").map((value) => value.trim());
 }
 
 export async function signInAction(formData: FormData) {
@@ -137,6 +141,11 @@ export async function createFamilyRoomAction(formData: FormData) {
   const roleLabel = normalizeText(formData.get("roleLabel")) || "親";
   const organization = normalizeText(formData.get("organization"));
   const status = normalizeText(formData.get("status")) || "KAZOQをはじめました";
+  const preferences = sanitizeFamilyPreferences({
+    menuItemIds: normalizeMultiSelect(formData, "menuItemIds"),
+    shortcutItemIds: normalizeMultiSelect(formData, "shortcutItemIds"),
+    favoriteItemIds: normalizeMultiSelect(formData, "favoriteItemIds")
+  });
 
   if (!familyName) {
     redirect("/auth");
@@ -154,7 +163,10 @@ export async function createFamilyRoomAction(formData: FormData) {
     .insert({
       name: familyName,
       invite_code: inviteCode,
-      created_by: context.appUserId
+      created_by: context.appUserId,
+      menu_item_ids: preferences.menuItemIds,
+      shortcut_item_ids: preferences.shortcutItemIds,
+      favorite_item_ids: preferences.favoriteItemIds
     })
     .select("id")
     .single<{ id: string }>();

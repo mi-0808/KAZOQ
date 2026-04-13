@@ -1,13 +1,13 @@
-"use client";
-
-import { Heart, NotebookPen, SmilePlus } from "lucide-react";
-import { diaryEntries, profiles } from "@/data/mock-data";
+import { Heart, SmilePlus } from "lucide-react";
 import { Chip } from "@/components/shared/chip";
 import { SectionCard } from "@/components/shared/section-card";
+import { DiaryBoardData } from "@/lib/repositories/diary";
 
 const moods = ["にこにこ", "おだやか", "がんばった", "つかれた", "しんぱい"] as const;
 
-export function DiaryBoard() {
+export function DiaryBoard({ data }: { data: DiaryBoardData }) {
+  const { entries, profiles } = data;
+
   return (
     <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
       <div className="space-y-5">
@@ -58,7 +58,10 @@ export function DiaryBoard() {
 
       <SectionCard title="交換日記一覧" subtitle="投稿者・日付・気分・本文・リアクションをまとめて表示">
         <div className="space-y-4">
-          {diaryEntries.map((entry) => {
+          {entries.length === 0 ? (
+            <div className="rounded-4xl bg-white px-4 py-6 text-sm text-ink/70">まだ交換日記がありません。投稿されるとここに実データが表示されます。</div>
+          ) : null}
+          {entries.map((entry) => {
             const author = profiles.find((profile) => profile.userId === entry.authorId);
             return (
               <article key={entry.id} className="rounded-4xl bg-white px-4 py-4">

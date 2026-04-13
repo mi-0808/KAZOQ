@@ -1,18 +1,11 @@
-"use client";
-
 import { CalendarPlus2, Clock3, MapPinned } from "lucide-react";
-import { places, profiles, schedules } from "@/data/mock-data";
 import { Chip } from "@/components/shared/chip";
 import { SectionCard } from "@/components/shared/section-card";
+import { CalendarBoardData } from "@/lib/repositories/calendar";
 
-const weekDays = [
-  { day: "金", date: "4/11" },
-  { day: "土", date: "4/12" },
-  { day: "日", date: "4/13" },
-  { day: "月", date: "4/14" }
-];
+export function CalendarBoard({ data }: { data: CalendarBoardData }) {
+  const { weekDays, schedules, places, profiles } = data;
 
-export function CalendarBoard() {
   return (
     <div className="space-y-5">
       <section className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
@@ -69,6 +62,9 @@ export function CalendarBoard() {
 
       <SectionCard title="家族予定一覧" subtitle="場所情報と所有者も合わせて確認">
         <div className="grid gap-3">
+          {schedules.length === 0 ? (
+            <div className="rounded-4xl bg-white px-4 py-6 text-sm text-ink/70">まだ予定がありません。実データの予定が入るとここに表示されます。</div>
+          ) : null}
           {schedules.map((item) => {
             const owner = profiles.find((profile) => profile.userId === item.ownerId);
             const place = places.find((value) => value.id === item.placeId);

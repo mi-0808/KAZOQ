@@ -1,4 +1,7 @@
 export type FamilyRole = "親" | "子" | "祖父母" | "保護者" | "その他";
+export type FamilyMenuItemId = "reports" | "messages" | "calendar" | "locations" | "profile";
+export type FamilyShortcutId = "reports" | "calendar" | "messages" | "locations";
+export type FavoriteFeatureId = "meal" | "report" | "schedule" | "location" | "diary";
 
 export type MessageCategory =
   | "雑談"
@@ -48,6 +51,12 @@ export interface Family {
   name: string;
   inviteCode: string;
   members: FamilyMember[];
+}
+
+export interface FamilyPreferences {
+  menuItemIds: FamilyMenuItemId[];
+  shortcutItemIds: FamilyShortcutId[];
+  favoriteItemIds: FavoriteFeatureId[];
 }
 
 export interface MessageTemplatePayload {
@@ -125,6 +134,13 @@ export interface DiaryReaction {
 
 export interface HomeShortcut {
   id: string;
+  label: string;
+  description: string;
+  href: string;
+}
+
+export interface FavoriteFeature {
+  id: FavoriteFeatureId;
   label: string;
   description: string;
   href: string;

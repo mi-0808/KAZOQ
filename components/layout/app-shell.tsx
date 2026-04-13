@@ -6,34 +6,45 @@ import Link from "next/link";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Profile } from "@/types/domain";
+import { FamilyMenuItemId, Profile } from "@/types/domain";
 
-const navItems = [
-  { href: "/home", label: "ホーム", icon: Home },
-  { href: "/reports", label: "報連相", icon: GitBranch },
-  { href: "/messages", label: "メッセージ", icon: MessageCircle },
-  { href: "/calendar", label: "予定", icon: NotebookPen },
-  { href: "/locations", label: "場所", icon: MapPinned },
-  { href: "/profile", label: "プロフィール", icon: UserRound },
-  { href: "/settings", label: "設定", icon: Settings }
+const coreNavItems = [
+  { href: "/home", label: "ホーム", icon: Home }
 ];
+
+const customizableNavItems: { id: FamilyMenuItemId; href: string; label: string; icon: typeof GitBranch }[] = [
+  { id: "reports", href: "/reports", label: "報連相", icon: GitBranch },
+  { id: "messages", href: "/messages", label: "メッセージ", icon: MessageCircle },
+  { id: "calendar", href: "/calendar", label: "予定", icon: NotebookPen },
+  { id: "locations", href: "/locations", label: "場所", icon: MapPinned },
+  { id: "profile", href: "/profile", label: "プロフィール", icon: UserRound }
+];
+
+const trailingNavItems = [{ href: "/settings", label: "設定", icon: Settings }];
 
 export function AppShell({
   children,
   familyName,
   inviteCode,
-  profiles
+  profiles,
+  menuItemIds
 }: {
   children: ReactNode;
   familyName: string;
   inviteCode: string;
   profiles: Profile[];
+  menuItemIds: FamilyMenuItemId[];
 }) {
   const pathname = usePathname();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
   const headerRef = useRef<HTMLElement | null>(null);
+  const navItems = [
+    ...coreNavItems,
+    ...customizableNavItems.filter((item) => menuItemIds.includes(item.id)),
+    ...trailingNavItems
+  ];
   const primaryMobileNav = navItems.slice(0, 3);
   const secondaryMobileNav = navItems.slice(3);
 
@@ -178,7 +189,7 @@ export function AppShell({
 
           <div className="lg:hidden">
             {isMoreOpen ? (
-              <div className="fixed inset-x-4 bottom-24 z-40 rounded-3xl bg-white/95 p-3 shadow-[0_8px_22px_rgba(83,70,45,0.12)] backdrop-blur sm:inset-x-6">
+              <div className="fixed inset-x-4 bottom-24 z-40 rounded-3xl border border-white/55 bg-white/88 p-3 shadow-[0_8px_24px_rgba(83,70,45,0.12)] backdrop-blur sm:inset-x-6">
                 <div className="grid grid-cols-2 gap-2">
                   {secondaryMobileNav.map(({ href, label, icon: Icon }) => (
                     <Link
@@ -187,7 +198,7 @@ export function AppShell({
                       onClick={() => setIsMoreOpen(false)}
                       className={cn(
                         "flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-semibold transition",
-                        pathname === href ? "bg-cream text-ink" : "bg-paper text-ink/80"
+                        pathname === href ? "bg-cream/90 text-ink" : "bg-white/55 text-ink/80"
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -198,7 +209,7 @@ export function AppShell({
               </div>
             ) : null}
 
-            <nav className="fixed inset-x-4 bottom-3 z-50 rounded-[28px] border border-white/60 bg-paper/95 px-2 py-2 shadow-[0_-8px_28px_rgba(83,70,45,0.12)] backdrop-blur sm:inset-x-6 sm:bottom-4">
+            <nav className="fixed inset-x-4 bottom-3 z-50 rounded-[28px] border border-white/55 bg-white/88 px-2 py-2 shadow-[0_-8px_28px_rgba(83,70,45,0.12)] backdrop-blur sm:inset-x-6 sm:bottom-4">
               <div className="grid grid-cols-4 gap-2">
                 {primaryMobileNav.map(({ href, label, icon: Icon }) => (
                   <Link
@@ -206,7 +217,7 @@ export function AppShell({
                     href={href}
                     className={cn(
                       "flex min-h-16 flex-col items-center justify-center rounded-3xl px-2 py-2 text-[11px] font-medium transition",
-                      pathname === href ? "bg-cream text-ink" : "text-ink/80 hover:bg-white/70"
+                      pathname === href ? "bg-cream/90 text-ink" : "text-ink/80 hover:bg-white/55"
                     )}
                   >
                     <Icon className="mb-1 h-4 w-4" />
@@ -218,7 +229,7 @@ export function AppShell({
                   onClick={() => setIsMoreOpen((value) => !value)}
                   className={cn(
                     "flex min-h-16 flex-col items-center justify-center rounded-3xl px-2 py-2 text-[11px] font-medium transition",
-                    isMoreOpen ? "bg-cream text-ink" : "text-ink/80 hover:bg-white/70"
+                    isMoreOpen ? "bg-cream/90 text-ink" : "text-ink/80 hover:bg-white/55"
                   )}
                 >
                   {isMoreOpen ? <ChevronDown className="mb-1 h-4 w-4" /> : <ChevronUp className="mb-1 h-4 w-4" />}
