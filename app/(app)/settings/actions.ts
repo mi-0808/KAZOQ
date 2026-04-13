@@ -9,17 +9,26 @@ function normalizeMultiSelect(formData: FormData, key: string) {
   return formData.getAll(key).filter((value): value is string => typeof value === "string").map((value) => value.trim());
 }
 
+function normalizeText(value: FormDataEntryValue | null) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export async function updateFamilyPreferencesAction(formData: FormData) {
   const context = await getCurrentAppContext();
   const preferences = sanitizeFamilyPreferences({
     menuItemIds: normalizeMultiSelect(formData, "menuItemIds"),
     shortcutItemIds: normalizeMultiSelect(formData, "shortcutItemIds"),
-    favoriteItemIds: normalizeMultiSelect(formData, "favoriteItemIds")
+    favoriteItemIds: normalizeMultiSelect(formData, "favoriteItemIds"),
+    notificationLevel: normalizeText(formData.get("notificationLevel")),
+    diaryVisibility: normalizeText(formData.get("diaryVisibility")),
+    locationSharingMode: normalizeText(formData.get("locationSharingMode")),
+    tasksEnabled: formData.has("tasksEnabled")
   });
 
   await updateFamilyPreferences(context.familyId, preferences);
 
   revalidatePath("/settings");
   revalidatePath("/home");
+  revalidatePath(`/rooms/${context.familyId}`);
   revalidatePath("/", "layout");
 }

@@ -1,5 +1,5 @@
-const CACHE_NAME = "kazoq-v1";
-const APP_SHELL = ["/", "/home", "/auth", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE_NAME = "kazoq-v2";
+const APP_SHELL = ["/", "/auth", "/home", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -45,7 +45,7 @@ self.addEventListener("fetch", (event) => {
           });
           return networkResponse;
         })
-        .catch(() => caches.match("/home"));
+        .catch(() => caches.match("/"));
     })
   );
 });

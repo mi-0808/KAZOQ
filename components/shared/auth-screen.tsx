@@ -3,7 +3,7 @@
 import { CheckCircle2, HeartHandshake, KeyRound, LockKeyhole, Mail, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { createFamilyRoomAction, joinFamilyAction, quickDemoLoginAction, signInAction, signUpAction } from "@/app/(auth)/auth/actions";
+import { createFamilyRoomAction, joinFamilyAction, signInAction, signUpAction } from "@/app/(auth)/auth/actions";
 import { defaultFamilyPreferences, favoriteFeatureOptions, menuItemOptions, shortcutOptions } from "@/lib/family-preferences";
 
 export function AuthScreen({
@@ -252,12 +252,8 @@ export function AuthScreen({
             </form>
 
             <div className="flex flex-wrap items-center gap-3 text-sm text-ink/70">
-              <form action={quickDemoLoginAction}>
-                <button className="font-semibold text-coral">デモ用にそのまま入る</button>
-              </form>
-              <span>または</span>
-              <Link href="/home" className="font-semibold text-coral">
-                ホーム画面へ移動
+              <Link href="/" className="font-semibold text-coral">
+                トップでデモを見る
               </Link>
             </div>
           </div>

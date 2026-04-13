@@ -57,5 +57,6 @@ export async function createMessageAction(formData: FormData) {
   });
 
   revalidatePath("/home");
+  revalidatePath(`/rooms/${context.familyId}`);
   revalidatePath("/messages");
 }

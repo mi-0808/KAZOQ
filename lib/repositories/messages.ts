@@ -86,8 +86,8 @@ export async function listMessages(familyId?: string): Promise<Message[]> {
       >[]
     >();
 
-  if (messageError || !messageRows || messageRows.length === 0) {
-    return mockMessages;
+  if (messageError) {
+    throw messageError;
   }
 
   const { data: readRows, error: readsError } = await supabase
@@ -95,7 +95,7 @@ export async function listMessages(familyId?: string): Promise<Message[]> {
     .select("message_id, user_id")
     .in(
       "message_id",
-      messageRows.map((message) => message.id)
+      (messageRows ?? []).map((message) => message.id)
     )
     .returns<Pick<Database["public"]["Tables"]["message_reads"]["Row"], "message_id" | "user_id">[]>();
 
@@ -109,7 +109,7 @@ export async function listMessages(familyId?: string): Promise<Message[]> {
     readMap.set(row.message_id, [...(readMap.get(row.message_id) ?? []), row.user_id]);
   }
 
-  return messageRows.map((message) => {
+  return (messageRows ?? []).map((message) => {
     const templatePayload = parseTemplatePayload(message.payload);
 
     return {
@@ -155,4 +155,33 @@ export async function createMessage(input: {
   }
 
   return { mode: "supabase" as const, id: data.id };
+}
+
+export async function markMessagesAsRead(input: { messageIds: string[]; userId: string }) {
+  if (await shouldUseDemoData()) {
+    return { mode: "mock" as const };
+  }
+
+  const messageIds = Array.from(new Set(input.messageIds)).filter(Boolean);
+
+  if (messageIds.length === 0) {
+    return { mode: "supabase" as const };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("message_reads").upsert(
+    messageIds.map((messageId) => ({
+      message_id: messageId,
+      user_id: input.userId
+    })),
+    {
+      onConflict: "message_id,user_id"
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return { mode: "supabase" as const };
 }

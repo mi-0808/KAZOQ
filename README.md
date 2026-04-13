@@ -82,6 +82,11 @@ supabase/
   migrations/
 ```
 
+補足ドキュメント:
+
+- 全体フロー設計: [docs/architecture-flow.md](/Users/matsuiminato/Desktop/家族共有アプリ/docs/architecture-flow.md:1)
+- MVP完了 / β版移行スコープ: [docs/beta-transition.md](/Users/matsuiminato/Desktop/家族共有アプリ/docs/beta-transition.md:1)
+
 ## 5. 実装方針
 
 - 先に `types/domain.ts` でドメイン型を固定

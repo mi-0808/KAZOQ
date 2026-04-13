@@ -22,24 +22,35 @@ const toneStyles = {
 };
 
 export function ReportBoard({ threads, profiles }: { threads: FamilyReportThread[]; profiles: Profile[] }) {
+  const quickTemplates: { kind: FamilyReportThread["kind"]; detail: string }[] = [
+    { kind: "ご飯連絡", detail: "食べる / いらない / 取り置き を返してください。" },
+    { kind: "欠食届", detail: "今日は夕飯を食べません。" },
+    { kind: "外泊届", detail: "今夜は外泊予定です。帰宅は明日の朝になります。" },
+    { kind: "お迎え相談", detail: "終了時間に間に合わないので、お迎えを相談したいです。" }
+  ];
+
   return (
     <div className="grid gap-4 xl:grid-cols-[0.82fr_1.18fr]">
       <div className="space-y-4">
-        <SectionCard title="報連相ツリーとは" subtitle="雑談ではなく、家庭内オペレーションを回すための場所">
-          <div className="space-y-3">
-            {[
-              "ご飯できたよ、食べる・いらない・取り置きの返答",
-              "外泊届、欠食届、帰宅の遅れなどの家庭内届け出",
-              "依頼と返答と承認が一本の流れで残る表示"
-            ].map((text) => (
-              <div key={text} className="rounded-3xl border border-softline/70 bg-white px-4 py-4 text-sm leading-6 text-ink/78">
-                {text}
-              </div>
+        <SectionCard title="すぐ出せる報連相" subtitle="家庭内オペレーションだけを短く整理">
+          <div className="grid gap-3">
+            {quickTemplates.map((template) => (
+              <form key={template.kind} action={createFamilyReportAction}>
+                <input type="hidden" name="kind" value={template.kind} />
+                <input type="hidden" name="detail" value={template.detail} />
+                <button className="flex w-full items-center justify-between rounded-3xl border border-softline/70 bg-white px-4 py-4 text-left transition hover:bg-cream">
+                  <div>
+                    <p className="font-semibold">{template.kind}</p>
+                    <p className="mt-1 text-sm text-ink/70">{template.detail}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </form>
             ))}
           </div>
         </SectionCard>
 
-        <SectionCard title="よく使う届出" subtitle="短い入力で、そのまま家庭内ツリーへ送れます">
+        <SectionCard title="自由入力で出す" subtitle="テンプレで足りないときだけ追記します">
           <form action={createFamilyReportAction} className="grid gap-3">
             <select name="kind" defaultValue="ご飯連絡" className="rounded-3xl border border-softline/70 bg-white px-4 py-3 text-sm outline-none">
               {["ご飯連絡", "欠食届", "外泊届", "お迎え相談", "帰宅連絡"].map((item) => (
@@ -51,12 +62,12 @@ export function ReportBoard({ threads, profiles }: { threads: FamilyReportThread
             <input
               name="title"
               className="rounded-3xl border border-softline/70 bg-white px-4 py-3 text-sm outline-none"
-              placeholder="例: 今日の夕飯、19:10にできました"
+              placeholder="タイトルを変えたいときだけ入力"
             />
             <textarea
-              name="summary"
+              name="detail"
               className="min-h-28 rounded-3xl border border-softline/70 bg-white px-4 py-3 text-sm outline-none"
-              placeholder="例: 食べる / いらない / 取り置き のどれかを返してください。"
+              placeholder="伝えたい要点を短く入力します"
             />
             <input type="hidden" name="actionLabel" value="新しい届け出" />
             <label className="flex items-center gap-2 rounded-3xl bg-white px-4 py-3 text-sm">
@@ -71,8 +82,11 @@ export function ReportBoard({ threads, profiles }: { threads: FamilyReportThread
         </SectionCard>
       </div>
 
-      <SectionCard title="家庭内ツリー" subtitle="依頼から返答・承諾までを一本で確認">
+      <SectionCard title="家庭内ツリー" subtitle="依頼、返答、完了までを一本で確認">
         <div className="space-y-4">
+          {threads.length === 0 ? (
+            <div className="rounded-4xl bg-white px-4 py-6 text-sm text-ink/70">まだ報連相はありません。左のテンプレートから最初の連絡を出せます。</div>
+          ) : null}
           {threads.map((thread) => {
             const Icon = kindIcon[thread.kind];
 
@@ -124,21 +138,25 @@ export function ReportBoard({ threads, profiles }: { threads: FamilyReportThread
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <form action={respondFamilyReportAction}>
-                    <input type="hidden" name="reportId" value={thread.id} />
-                    <input type="hidden" name="label" value={thread.kind === "ご飯連絡" ? "返答しました" : "確認しました"} />
-                    <input
-                      type="hidden"
-                      name="body"
-                      value={
-                        thread.kind === "ご飯連絡"
-                          ? "今日は食べる / いらない / 取り置き の返答をこのツリーで残します。"
-                          : "内容を確認して、このまま進めます。"
-                      }
-                    />
-                    <input type="hidden" name="status" value="進行中" />
-                    <button className="rounded-full bg-cream px-4 py-2 text-sm font-semibold">返答する</button>
-                  </form>
+                  {thread.kind === "ご飯連絡" ? (
+                    ["食べる", "取り置き", "いらない"].map((choice) => (
+                      <form key={choice} action={respondFamilyReportAction}>
+                        <input type="hidden" name="reportId" value={thread.id} />
+                        <input type="hidden" name="label" value={choice} />
+                        <input type="hidden" name="body" value={`${choice} で返答しました。`} />
+                        <input type="hidden" name="status" value="進行中" />
+                        <button className="rounded-full bg-cream px-4 py-2 text-sm font-semibold">{choice}</button>
+                      </form>
+                    ))
+                  ) : (
+                    <form action={respondFamilyReportAction}>
+                      <input type="hidden" name="reportId" value={thread.id} />
+                      <input type="hidden" name="label" value="確認しました" />
+                      <input type="hidden" name="body" value="内容を確認して、このまま進めます。" />
+                      <input type="hidden" name="status" value="進行中" />
+                      <button className="rounded-full bg-cream px-4 py-2 text-sm font-semibold">確認した</button>
+                    </form>
+                  )}
                   <form action={completeFamilyReportAction}>
                     <input type="hidden" name="reportId" value={thread.id} />
                     <input type="hidden" name="title" value="対応完了" />

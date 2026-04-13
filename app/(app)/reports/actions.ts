@@ -9,14 +9,53 @@ function normalizeText(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function buildReportDraft(kind: FamilyReportKind, detail: string) {
+  const baseDetail = detail || "家族に共有したい連絡があります。";
+
+  switch (kind) {
+    case "ご飯連絡":
+      return {
+        title: "ご飯の確認",
+        summary: detail || "食べる / いらない / 取り置き を返してください。",
+        actionLabel: "ご飯連絡を出しました"
+      };
+    case "欠食届":
+      return {
+        title: "欠食届",
+        summary: baseDetail,
+        actionLabel: "欠食届を出しました"
+      };
+    case "外泊届":
+      return {
+        title: "外泊届",
+        summary: baseDetail,
+        actionLabel: "外泊届を出しました"
+      };
+    case "お迎え相談":
+      return {
+        title: "お迎えの相談",
+        summary: baseDetail,
+        actionLabel: "お迎え相談を出しました"
+      };
+    case "帰宅連絡":
+      return {
+        title: "帰宅連絡",
+        summary: baseDetail,
+        actionLabel: "帰宅連絡を出しました"
+      };
+  }
+}
+
 const reportKinds: FamilyReportKind[] = ["ご飯連絡", "欠食届", "外泊届", "お迎え相談", "帰宅連絡"];
 const reportStatuses: FamilyReportStatus[] = ["確認待ち", "進行中", "完了"];
 
 export async function createFamilyReportAction(formData: FormData) {
   const context = await getCurrentAppContext();
   const kind = normalizeText(formData.get("kind")) as FamilyReportKind;
-  const title = normalizeText(formData.get("title"));
-  const summary = normalizeText(formData.get("summary"));
+  const detail = normalizeText(formData.get("detail"));
+  const draft = buildReportDraft(kind, detail);
+  const title = normalizeText(formData.get("title")) || draft.title;
+  const summary = normalizeText(formData.get("summary")) || draft.summary;
 
   if (!title || !summary || !reportKinds.includes(kind)) {
     return;
@@ -33,7 +72,7 @@ export async function createFamilyReportAction(formData: FormData) {
       {
         id: crypto.randomUUID(),
         authorId: context.appUserId,
-        label: normalizeText(formData.get("actionLabel")) || "新しい届け出",
+        label: normalizeText(formData.get("actionLabel")) || draft.actionLabel,
         body: summary,
         createdAt: new Date().toISOString(),
         tone: "request"
@@ -42,6 +81,7 @@ export async function createFamilyReportAction(formData: FormData) {
   });
 
   revalidatePath("/home");
+  revalidatePath(`/rooms/${context.familyId}`);
   revalidatePath("/reports");
 }
 
@@ -70,6 +110,7 @@ export async function respondFamilyReportAction(formData: FormData) {
   });
 
   revalidatePath("/home");
+  revalidatePath(`/rooms/${context.familyId}`);
   revalidatePath("/reports");
 }
 
@@ -94,5 +135,6 @@ export async function completeFamilyReportAction(formData: FormData) {
   });
 
   revalidatePath("/home");
+  revalidatePath(`/rooms/${context.familyId}`);
   revalidatePath("/reports");
 }

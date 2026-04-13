@@ -57,7 +57,15 @@ const templates = [
   }
 ];
 
-export function MessageTimeline({ messages, profiles }: { messages: Message[]; profiles: Profile[] }) {
+export function MessageTimeline({
+  messages,
+  profiles,
+  currentUserId
+}: {
+  messages: Message[];
+  profiles: Profile[];
+  currentUserId: string;
+}) {
   return (
     <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
       <div className="space-y-5">
@@ -71,7 +79,7 @@ export function MessageTimeline({ messages, profiles }: { messages: Message[]; p
           </Link>
         </SectionCard>
 
-        <SectionCard title="投稿する" subtitle="通常メッセージもテンプレ投稿もここから">
+        <SectionCard title="ひとこと投稿" subtitle="短い連絡はここから。定型連絡は下のテンプレートが便利です">
           <form action={createMessageAction} className="space-y-4">
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
@@ -89,7 +97,7 @@ export function MessageTimeline({ messages, profiles }: { messages: Message[]; p
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button type="button" className="inline-flex items-center gap-2 rounded-full bg-lavender px-4 py-2 font-semibold">
                 <Sparkles className="h-4 w-4" />
-                テンプレートを使う
+                下のテンプレートを使う
               </button>
               <button className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2 font-semibold text-white">
                 <SendHorizonal className="h-4 w-4" />
@@ -99,7 +107,7 @@ export function MessageTimeline({ messages, profiles }: { messages: Message[]; p
           </form>
         </SectionCard>
 
-        <SectionCard title="テンプレート投稿" subtitle="家族連絡を短時間で、漏れなく共有">
+        <SectionCard title="すぐ送れるテンプレート" subtitle="ご飯、買い物、家事などの定型連絡を短時間で">
           <div className="grid gap-3">
             {templates.map((template) => (
               <form key={template.title} action={createMessageAction}>
@@ -120,8 +128,11 @@ export function MessageTimeline({ messages, profiles }: { messages: Message[]; p
         </SectionCard>
       </div>
 
-      <SectionCard title="家族チャット" subtitle="通常投稿とテンプレ投稿を同じタイムラインに表示">
+      <SectionCard title="家族チャット" subtitle="最新順。画面を開くと既読が付きます">
         <div className="space-y-4">
+          {messages.length === 0 ? (
+            <div className="rounded-4xl bg-white px-4 py-6 text-sm text-ink/70">まだメッセージがありません。上の投稿フォームかテンプレートから始められます。</div>
+          ) : null}
           {messages.map((message) => {
             const author = profiles.find((profile) => profile.userId === message.authorId);
             return (
@@ -134,7 +145,7 @@ export function MessageTimeline({ messages, profiles }: { messages: Message[]; p
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold">{author?.name}</p>
                       <Chip>{message.category}</Chip>
-                      {message.templateType ? <Chip color="bg-lavender text-ink">テンプレ投稿</Chip> : null}
+                      {message.templateType ? <Chip color="bg-lavender text-ink">テンプレ</Chip> : null}
                       <span className="text-xs text-ink/60">{message.createdAt}</span>
                     </div>
                     <p className="mt-3 text-sm leading-7 text-ink/80">{message.body}</p>
@@ -153,7 +164,10 @@ export function MessageTimeline({ messages, profiles }: { messages: Message[]; p
                       </div>
                     ) : null}
 
-                    <div className="mt-4 text-xs text-ink/60">確認済み {message.readBy.length}人</div>
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-ink/60">
+                      <span>確認済み {message.readBy.length}人</span>
+                      {message.readBy.includes(currentUserId) ? <Chip color="bg-mint text-ink">あなたは既読</Chip> : null}
+                    </div>
                   </div>
                 </div>
               </article>

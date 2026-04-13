@@ -1,4 +1,5 @@
 import { Heart, SmilePlus } from "lucide-react";
+import { addDiaryReactionAction, createDiaryEntryAction } from "@/app/(app)/diary/actions";
 import { Chip } from "@/components/shared/chip";
 import { SectionCard } from "@/components/shared/section-card";
 import { DiaryBoardData } from "@/lib/repositories/diary";
@@ -6,36 +7,50 @@ import { DiaryBoardData } from "@/lib/repositories/diary";
 const moods = ["にこにこ", "おだやか", "がんばった", "つかれた", "しんぱい"] as const;
 
 export function DiaryBoard({ data }: { data: DiaryBoardData }) {
-  const { entries, profiles } = data;
+  const { entries, profiles, defaultVisibility } = data;
 
   return (
     <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
       <div className="space-y-5">
         <SectionCard title="交換日記を書く" subtitle="気分と今日のことをやさしく残す">
-          <div className="space-y-4">
+          <form action={createDiaryEntryAction} className="space-y-4">
             <div>
               <p className="mb-2 text-sm font-medium">今日の気分</p>
               <div className="flex flex-wrap gap-2">
                 {moods.map((mood) => (
-                  <button key={mood} className="rounded-full bg-cream px-4 py-2 text-sm font-semibold">
+                  <label key={mood} className="cursor-pointer rounded-full bg-cream px-4 py-2 text-sm font-semibold">
+                    <input type="radio" name="mood" value={mood} defaultChecked={mood === "にこにこ"} className="sr-only" />
                     {mood}
-                  </button>
+                  </label>
                 ))}
               </div>
             </div>
-            {[
-              "今日あったこと",
-              "嬉しかったこと",
-              "困っていること",
-              "家族に伝えたいこと"
-            ].map((label) => (
-              <label key={label} className="block">
-                <span className="mb-2 block text-sm font-medium">{label}</span>
-                <textarea className="min-h-24 w-full rounded-4xl border border-softline bg-white px-4 py-3 outline-none" />
-              </label>
-            ))}
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">公開範囲</span>
+              <select name="visibility" defaultValue={defaultVisibility} className="w-full rounded-4xl border border-softline bg-white px-4 py-3 outline-none">
+                <option value="family">家族全員</option>
+                <option value="guardians">保護者中心</option>
+                <option value="private">自分だけ</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">今日あったこと</span>
+              <textarea name="todayStory" className="min-h-24 w-full rounded-4xl border border-softline bg-white px-4 py-3 outline-none" />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">嬉しかったこと</span>
+              <textarea name="happyMoment" className="min-h-24 w-full rounded-4xl border border-softline bg-white px-4 py-3 outline-none" />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">困っていること</span>
+              <textarea name="concern" className="min-h-24 w-full rounded-4xl border border-softline bg-white px-4 py-3 outline-none" />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">家族に伝えたいこと</span>
+              <textarea name="messageToFamily" className="min-h-24 w-full rounded-4xl border border-softline bg-white px-4 py-3 outline-none" />
+            </label>
             <button className="w-full rounded-3xl bg-ink px-4 py-3 text-base font-semibold text-white">日記を投稿する</button>
-          </div>
+          </form>
         </SectionCard>
 
         <SectionCard title="感情の見え方" subtitle="スタンプのようにやわらかく共有">
@@ -76,6 +91,7 @@ export function DiaryBoard({ data }: { data: DiaryBoardData }) {
                     </div>
                   </div>
                   <Chip color="bg-lavender text-ink">{entry.mood}</Chip>
+                  <Chip color="bg-cream text-ink">{entry.visibility === "private" ? "自分だけ" : entry.visibility === "guardians" ? "保護者中心" : "家族全員"}</Chip>
                 </div>
 
                 <div className="mt-4 grid gap-3">
@@ -111,10 +127,14 @@ export function DiaryBoard({ data }: { data: DiaryBoardData }) {
                       </span>
                     );
                   })}
-                  <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-semibold">
-                    <SmilePlus className="h-4 w-4" />
-                    反応する
-                  </button>
+                  <form action={addDiaryReactionAction}>
+                    <input type="hidden" name="entryId" value={entry.id} />
+                    <input type="hidden" name="emoji" value="😊" />
+                    <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-semibold">
+                      <SmilePlus className="h-4 w-4" />
+                      反応する
+                    </button>
+                  </form>
                 </div>
               </article>
             );

@@ -93,6 +93,58 @@ export function SettingsBoard({
             </div>
           </div>
 
+          <div className="rounded-4xl bg-white p-5">
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5" />
+              <p className="font-semibold">通知・公開・見守り設定</p>
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">通知レベル</span>
+                <select name="notificationLevel" defaultValue={preferences.notificationLevel} className="w-full rounded-3xl border border-softline bg-cream px-4 py-3 text-sm outline-none">
+                  <option value="off">通知しない</option>
+                  <option value="important">大事な連絡だけ</option>
+                  <option value="all">すべて通知</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">交換日記の初期公開範囲</span>
+                <select name="diaryVisibility" defaultValue={preferences.diaryVisibility} className="w-full rounded-3xl border border-softline bg-cream px-4 py-3 text-sm outline-none">
+                  <option value="family">家族全員</option>
+                  <option value="guardians">保護者中心</option>
+                  <option value="private">自分だけ</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">位置共有モード</span>
+                <select
+                  name="locationSharingMode"
+                  defaultValue={preferences.locationSharingMode}
+                  className="w-full rounded-3xl border border-softline bg-cream px-4 py-3 text-sm outline-none"
+                >
+                  <option value="manual">手動で共有</option>
+                  <option value="auto">画面表示時に自動更新</option>
+                </select>
+              </label>
+
+              <label className="flex items-start gap-3 rounded-3xl bg-cream px-4 py-4">
+                <input
+                  type="checkbox"
+                  name="tasksEnabled"
+                  value="on"
+                  defaultChecked={preferences.tasksEnabled}
+                  className="mt-1 h-4 w-4 accent-coral"
+                />
+                <span>
+                  <span className="block font-semibold">家庭タスクを使う</span>
+                  <span className="mt-1 block text-sm text-ink/70">買い物や準備を、報連相とは別にやることとして管理します。</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between rounded-4xl bg-cream px-5 py-4">
             <div className="flex items-center gap-2">
               <Settings2 className="h-5 w-5" />

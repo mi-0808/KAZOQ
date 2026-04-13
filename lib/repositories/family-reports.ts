@@ -95,11 +95,11 @@ export async function listFamilyReports(familyId = family.id): Promise<FamilyRep
       >
     >();
 
-  if (error || !data) {
-    return familyReports;
+  if (error) {
+    throw error;
   }
 
-  return data.map((report) => ({
+  return (data ?? []).map((report) => ({
     id: report.id,
     familyId: report.family_id,
     kind: report.kind as FamilyReportThread["kind"],

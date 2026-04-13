@@ -1,14 +1,7 @@
-import { HomeDashboard } from "@/components/home/home-dashboard";
-import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
-import { getHomeFeed } from "@/lib/repositories/home";
+import { redirect } from "next/navigation";
+import { getCurrentAppContext } from "@/lib/repositories/app-context";
 
 export default async function HomePage() {
-  const feed = await getHomeFeed();
-
-  return (
-    <>
-      <RealtimeRefresh tables={["messages", "family_reports", "family_report_actions", "profiles"]} />
-      <HomeDashboard feed={feed} />
-    </>
-  );
+  const context = await getCurrentAppContext();
+  redirect(`/rooms/${context.familyId}`);
 }

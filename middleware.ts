@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const protectedPaths = ["/home", "/reports", "/messages", "/calendar", "/locations", "/diary", "/profile", "/settings"];
+const protectedPaths = ["/home", "/rooms", "/reports", "/messages", "/calendar", "/locations", "/diary", "/profile", "/settings"];
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

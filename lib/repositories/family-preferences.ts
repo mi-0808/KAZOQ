@@ -7,7 +7,14 @@ import type { Database } from "@/types/supabase";
 
 type FamilySettingsRow = Pick<
   Database["public"]["Tables"]["families"]["Row"],
-  "id" | "menu_item_ids" | "shortcut_item_ids" | "favorite_item_ids"
+  | "id"
+  | "menu_item_ids"
+  | "shortcut_item_ids"
+  | "favorite_item_ids"
+  | "notification_level"
+  | "diary_visibility"
+  | "location_sharing_mode"
+  | "tasks_enabled"
 >;
 
 export async function getFamilyPreferences(familyId?: string): Promise<FamilyPreferences> {
@@ -20,7 +27,7 @@ export async function getFamilyPreferences(familyId?: string): Promise<FamilyPre
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("families")
-    .select("id, menu_item_ids, shortcut_item_ids, favorite_item_ids")
+    .select("id, menu_item_ids, shortcut_item_ids, favorite_item_ids, notification_level, diary_visibility, location_sharing_mode, tasks_enabled")
     .eq("id", resolvedFamilyId)
     .limit(1)
     .maybeSingle<FamilySettingsRow>();
@@ -32,7 +39,11 @@ export async function getFamilyPreferences(familyId?: string): Promise<FamilyPre
   return sanitizeFamilyPreferences({
     menuItemIds: data?.menu_item_ids ?? defaultFamilyPreferences.menuItemIds,
     shortcutItemIds: data?.shortcut_item_ids ?? defaultFamilyPreferences.shortcutItemIds,
-    favoriteItemIds: data?.favorite_item_ids ?? defaultFamilyPreferences.favoriteItemIds
+    favoriteItemIds: data?.favorite_item_ids ?? defaultFamilyPreferences.favoriteItemIds,
+    notificationLevel: data?.notification_level ?? defaultFamilyPreferences.notificationLevel,
+    diaryVisibility: data?.diary_visibility ?? defaultFamilyPreferences.diaryVisibility,
+    locationSharingMode: data?.location_sharing_mode ?? defaultFamilyPreferences.locationSharingMode,
+    tasksEnabled: data?.tasks_enabled ?? defaultFamilyPreferences.tasksEnabled
   });
 }
 
@@ -48,7 +59,11 @@ export async function updateFamilyPreferences(familyId: string, preferences: Fam
     .update({
       menu_item_ids: normalized.menuItemIds,
       shortcut_item_ids: normalized.shortcutItemIds,
-      favorite_item_ids: normalized.favoriteItemIds
+      favorite_item_ids: normalized.favoriteItemIds,
+      notification_level: normalized.notificationLevel,
+      diary_visibility: normalized.diaryVisibility,
+      location_sharing_mode: normalized.locationSharingMode,
+      tasks_enabled: normalized.tasksEnabled
     })
     .eq("id", familyId);
 

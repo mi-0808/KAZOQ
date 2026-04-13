@@ -27,4 +27,5 @@ export async function updateProfileAction(formData: FormData) {
 
   revalidatePath("/profile");
   revalidatePath("/home");
+  revalidatePath(`/rooms/${context.familyId}`);
 }

@@ -43,7 +43,7 @@ export default async function AuthPage({
   }
 
   if (membership) {
-    redirect("/home");
+    redirect(`/rooms/${membership.family_id}`);
   }
 
   return <AuthScreen isSignedIn hasFamilyRoom={false} accountLabel={user.email ?? undefined} errorMessage={errorMessage} />;

@@ -20,6 +20,12 @@ function formatDateLabel(value: string) {
   }).format(new Date(value));
 }
 
+function formatDateInput(value: string) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
 function formatWeekday(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     weekday: "short"
@@ -107,6 +113,7 @@ export async function getCalendarBoardData(): Promise<CalendarBoardData> {
     familyId: item.family_id,
     title: item.title,
     date: formatDateLabel(item.starts_at),
+    dateValue: formatDateInput(item.starts_at),
     startTime: formatTime(item.starts_at),
     endTime: formatTime(item.ends_at),
     ownerId: item.owner_id ?? undefined,
@@ -133,4 +140,76 @@ export async function getCalendarBoardData(): Promise<CalendarBoardData> {
     places,
     profiles: profileBoard.profiles
   };
+}
+
+export async function createSchedule(input: {
+  familyId: string;
+  title: string;
+  type: ScheduleItem["type"];
+  startsAt: string;
+  endsAt: string;
+  ownerId?: string;
+  placeId?: string;
+  note?: string;
+}) {
+  if (await shouldUseDemoData()) {
+    return { mode: "mock" as const };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("schedules")
+    .insert({
+      family_id: input.familyId,
+      title: input.title,
+      type: input.type,
+      starts_at: input.startsAt,
+      ends_at: input.endsAt,
+      owner_id: input.ownerId ?? null,
+      place_id: input.placeId ?? null,
+      note: input.note ?? null
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (error || !data) {
+    throw error ?? new Error("Failed to create schedule");
+  }
+
+  return { mode: "supabase" as const, id: data.id };
+}
+
+export async function updateSchedule(input: {
+  scheduleId: string;
+  title: string;
+  type: ScheduleItem["type"];
+  startsAt: string;
+  endsAt: string;
+  ownerId?: string;
+  placeId?: string;
+  note?: string;
+}) {
+  if (await shouldUseDemoData()) {
+    return { mode: "mock" as const };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("schedules")
+    .update({
+      title: input.title,
+      type: input.type,
+      starts_at: input.startsAt,
+      ends_at: input.endsAt,
+      owner_id: input.ownerId ?? null,
+      place_id: input.placeId ?? null,
+      note: input.note ?? null
+    })
+    .eq("id", input.scheduleId);
+
+  if (error) {
+    throw error;
+  }
+
+  return { mode: "supabase" as const, id: input.scheduleId };
 }

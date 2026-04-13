@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       inviteCode={profileBoard.family.inviteCode}
       profiles={profileBoard.profiles}
       menuItemIds={preferences.menuItemIds}
+      homeHref={`/rooms/${profileBoard.family.id}`}
     >
       {children}
     </AppShell>

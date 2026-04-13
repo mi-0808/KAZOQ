@@ -8,10 +8,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FamilyMenuItemId, Profile } from "@/types/domain";
 
-const coreNavItems = [
-  { href: "/home", label: "ホーム", icon: Home }
-];
-
 const customizableNavItems: { id: FamilyMenuItemId; href: string; label: string; icon: typeof GitBranch }[] = [
   { id: "reports", href: "/reports", label: "報連相", icon: GitBranch },
   { id: "messages", href: "/messages", label: "メッセージ", icon: MessageCircle },
@@ -27,19 +23,22 @@ export function AppShell({
   familyName,
   inviteCode,
   profiles,
-  menuItemIds
+  menuItemIds,
+  homeHref
 }: {
   children: ReactNode;
   familyName: string;
   inviteCode: string;
   profiles: Profile[];
   menuItemIds: FamilyMenuItemId[];
+  homeHref: string;
 }) {
   const pathname = usePathname();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
   const headerRef = useRef<HTMLElement | null>(null);
+  const coreNavItems = [{ href: homeHref, label: "ホーム", icon: Home }];
   const navItems = [
     ...coreNavItems,
     ...customizableNavItems.filter((item) => menuItemIds.includes(item.id)),

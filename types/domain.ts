@@ -2,6 +2,9 @@ export type FamilyRole = "親" | "子" | "祖父母" | "保護者" | "その他"
 export type FamilyMenuItemId = "reports" | "messages" | "calendar" | "locations" | "profile";
 export type FamilyShortcutId = "reports" | "calendar" | "messages" | "locations";
 export type FavoriteFeatureId = "meal" | "report" | "schedule" | "location" | "diary";
+export type NotificationLevel = "off" | "important" | "all";
+export type DiaryVisibilityScope = "family" | "guardians" | "private";
+export type LocationSharingMode = "manual" | "auto";
 
 export type MessageCategory =
   | "雑談"
@@ -57,6 +60,10 @@ export interface FamilyPreferences {
   menuItemIds: FamilyMenuItemId[];
   shortcutItemIds: FamilyShortcutId[];
   favoriteItemIds: FavoriteFeatureId[];
+  notificationLevel: NotificationLevel;
+  diaryVisibility: DiaryVisibilityScope;
+  locationSharingMode: LocationSharingMode;
+  tasksEnabled: boolean;
 }
 
 export interface MessageTemplatePayload {
@@ -75,6 +82,7 @@ export interface Message {
   body: string;
   createdAt: string;
   readBy: string[];
+  isRead?: boolean;
   templateType?: TemplateType;
   templatePayload?: MessageTemplatePayload;
 }
@@ -84,6 +92,7 @@ export interface ScheduleItem {
   familyId: string;
   title: string;
   date: string;
+  dateValue?: string;
   startTime: string;
   endTime: string;
   ownerId?: string;
@@ -110,6 +119,8 @@ export interface FamilyLocation {
   label: string;
   updatedAt: string;
   placeId?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface DiaryEntry {
@@ -118,6 +129,7 @@ export interface DiaryEntry {
   authorId: string;
   date: string;
   mood: MoodType;
+  visibility: DiaryVisibilityScope;
   todayStory: string;
   happyMoment: string;
   concern: string;
@@ -170,4 +182,16 @@ export interface FamilyReportThread {
   createdAt: string;
   requiresResponse: boolean;
   actions: FamilyReportAction[];
+}
+
+export interface FamilyTask {
+  id: string;
+  familyId: string;
+  createdBy: string;
+  title: string;
+  note: string;
+  assigneeId?: string;
+  dueDate?: string;
+  status: "open" | "done";
+  createdAt: string;
 }

@@ -1,4 +1,5 @@
 import { CalendarPlus2, Clock3, MapPinned } from "lucide-react";
+import { createScheduleAction, updateScheduleAction } from "@/app/(app)/calendar/actions";
 import { Chip } from "@/components/shared/chip";
 import { SectionCard } from "@/components/shared/section-card";
 import { CalendarBoardData } from "@/lib/repositories/calendar";
@@ -13,12 +14,42 @@ export function CalendarBoard({ data }: { data: CalendarBoardData }) {
           title="家族カレンダー"
           subtitle="家族予定と個人予定を一緒に整理"
           action={
-            <button className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2 text-sm font-semibold">
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2 text-sm font-semibold">
               <CalendarPlus2 className="h-4 w-4" />
               予定を作成
-            </button>
+            </div>
           }
         >
+          <form action={createScheduleAction} className="mb-4 grid gap-3 rounded-4xl bg-white p-4 md:grid-cols-2">
+            <input name="title" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none" placeholder="予定名" />
+            <select name="type" defaultValue="家族" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none">
+              <option value="家族">家族</option>
+              <option value="個人">個人</option>
+            </select>
+            <input type="date" name="date" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none" />
+            <div className="grid grid-cols-2 gap-3">
+              <input type="time" name="startTime" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none" />
+              <input type="time" name="endTime" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none" />
+            </div>
+            <select name="ownerId" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none">
+              <option value="">担当者なし</option>
+              {profiles.map((profile) => (
+                <option key={profile.userId} value={profile.userId}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+            <select name="placeId" className="rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none">
+              <option value="">場所未設定</option>
+              {places.map((place) => (
+                <option key={place.id} value={place.id}>
+                  {place.name}
+                </option>
+              ))}
+            </select>
+            <textarea name="note" className="min-h-24 rounded-3xl border border-softline bg-paper px-4 py-3 text-sm outline-none md:col-span-2" placeholder="メモ（任意）" />
+            <button className="rounded-3xl bg-sky px-4 py-3 text-sm font-semibold md:col-span-2">この内容で予定を追加</button>
+          </form>
           <div className="grid gap-3 md:grid-cols-4">
             {weekDays.map((day) => (
               <div key={day.date} className="rounded-4xl bg-white p-4">
@@ -87,7 +118,40 @@ export function CalendarBoard({ data }: { data: CalendarBoardData }) {
                     <span>{owner ? `${owner.name}の予定` : "家族みんな"}</span>
                   </div>
                 </div>
-                <button className="rounded-full bg-cream px-4 py-2 text-sm font-semibold">編集</button>
+                <details className="rounded-3xl bg-cream px-4 py-3">
+                  <summary className="cursor-pointer text-sm font-semibold">編集</summary>
+                  <form action={updateScheduleAction} className="mt-3 grid gap-3">
+                    <input type="hidden" name="scheduleId" value={item.id} />
+                    <input name="title" defaultValue={item.title} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none" />
+                    <select name="type" defaultValue={item.type} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none">
+                      <option value="家族">家族</option>
+                      <option value="個人">個人</option>
+                    </select>
+                    <input type="date" name="date" defaultValue={item.dateValue} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="time" name="startTime" defaultValue={item.startTime} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none" />
+                      <input type="time" name="endTime" defaultValue={item.endTime} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none" />
+                    </div>
+                    <select name="ownerId" defaultValue={item.ownerId ?? ""} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none">
+                      <option value="">担当者なし</option>
+                      {profiles.map((profile) => (
+                        <option key={profile.userId} value={profile.userId}>
+                          {profile.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select name="placeId" defaultValue={item.placeId ?? ""} className="rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none">
+                      <option value="">場所未設定</option>
+                      {places.map((place) => (
+                        <option key={place.id} value={place.id}>
+                          {place.name}
+                        </option>
+                      ))}
+                    </select>
+                    <textarea name="note" defaultValue={item.note ?? ""} className="min-h-20 rounded-3xl border border-softline bg-white px-4 py-3 text-sm outline-none" />
+                    <button className="rounded-3xl bg-white px-4 py-3 text-sm font-semibold">更新する</button>
+                  </form>
+                </details>
               </div>
             );
           })}

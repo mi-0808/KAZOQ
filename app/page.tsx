@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { TopLanding } from "@/components/top/top-landing";
 
 export default function IndexPage() {
-  redirect("/auth");
+  return <TopLanding />;
 }

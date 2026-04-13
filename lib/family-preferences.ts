@@ -3,7 +3,11 @@ import { FavoriteFeature, FavoriteFeatureId, FamilyMenuItemId, FamilyPreferences
 export const defaultFamilyPreferences: FamilyPreferences = {
   menuItemIds: ["reports", "messages", "calendar", "locations", "profile"],
   shortcutItemIds: ["reports", "calendar", "messages", "locations"],
-  favoriteItemIds: ["meal", "report", "schedule", "location"]
+  favoriteItemIds: ["meal", "report", "schedule", "location"],
+  notificationLevel: "important",
+  diaryVisibility: "family",
+  locationSharingMode: "manual",
+  tasksEnabled: true
 };
 
 export const menuItemOptions: { id: FamilyMenuItemId; label: string; description: string }[] = [
@@ -46,7 +50,16 @@ export function sanitizeFamilyPreferences(input?: {
   menuItemIds?: string[];
   shortcutItemIds?: string[];
   favoriteItemIds?: string[];
+  notificationLevel?: string;
+  diaryVisibility?: string;
+  locationSharingMode?: string;
+  tasksEnabled?: boolean | null;
 } | null): FamilyPreferences {
+  const notificationLevel = input?.notificationLevel === "off" || input?.notificationLevel === "all" ? input.notificationLevel : defaultFamilyPreferences.notificationLevel;
+  const diaryVisibility =
+    input?.diaryVisibility === "guardians" || input?.diaryVisibility === "private" ? input.diaryVisibility : defaultFamilyPreferences.diaryVisibility;
+  const locationSharingMode = input?.locationSharingMode === "auto" ? "auto" : defaultFamilyPreferences.locationSharingMode;
+
   return {
     menuItemIds: normalizeSelection(input?.menuItemIds ?? [], menuItemOptions.map((item) => item.id), defaultFamilyPreferences.menuItemIds),
     shortcutItemIds: normalizeSelection(
@@ -58,7 +71,11 @@ export function sanitizeFamilyPreferences(input?: {
       input?.favoriteItemIds ?? [],
       favoriteFeatureOptions.map((item) => item.id),
       defaultFamilyPreferences.favoriteItemIds
-    )
+    ),
+    notificationLevel,
+    diaryVisibility,
+    locationSharingMode,
+    tasksEnabled: input?.tasksEnabled ?? defaultFamilyPreferences.tasksEnabled
   };
 }
 

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "KAZOQ（カゾック）",
     short_name: "KAZOQ",
     description: "家族の連絡ノート・予定帳・交換日記・見守りをまとめた生活連携アプリ",
-    start_url: "/home",
+    start_url: "/",
     display: "standalone",
     background_color: "#FFF7CC",
     theme_color: "#FFB24D",

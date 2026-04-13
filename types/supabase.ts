@@ -29,6 +29,10 @@ export interface Database {
           menu_item_ids: string[];
           shortcut_item_ids: string[];
           favorite_item_ids: string[];
+          notification_level: string;
+          diary_visibility: string;
+          location_sharing_mode: string;
+          tasks_enabled: boolean;
           created_at: string;
         };
         Insert: {
@@ -39,6 +43,10 @@ export interface Database {
           menu_item_ids?: string[];
           shortcut_item_ids?: string[];
           favorite_item_ids?: string[];
+          notification_level?: string;
+          diary_visibility?: string;
+          location_sharing_mode?: string;
+          tasks_enabled?: boolean;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["families"]["Insert"]>;
@@ -240,6 +248,7 @@ export interface Database {
           label: string | null;
           lat: number | null;
           lng: number | null;
+          share_mode: string | null;
           captured_at: string;
         };
         Insert: {
@@ -250,6 +259,7 @@ export interface Database {
           label?: string | null;
           lat?: number | null;
           lng?: number | null;
+          share_mode?: string | null;
           captured_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["locations"]["Insert"]>;
@@ -260,6 +270,7 @@ export interface Database {
           family_id: string;
           author_id: string;
           mood: string;
+          visibility_scope: string;
           today_story: string;
           happy_moment: string | null;
           concern: string | null;
@@ -271,6 +282,7 @@ export interface Database {
           family_id: string;
           author_id: string;
           mood: string;
+          visibility_scope?: string;
           today_story: string;
           happy_moment?: string | null;
           concern?: string | null;
@@ -278,6 +290,33 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["diary_entries"]["Insert"]>;
+      };
+      family_tasks: {
+        Row: {
+          id: string;
+          family_id: string;
+          created_by: string;
+          assignee_id: string | null;
+          title: string;
+          note: string | null;
+          due_date: string | null;
+          status: string;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          family_id: string;
+          created_by: string;
+          assignee_id?: string | null;
+          title: string;
+          note?: string | null;
+          due_date?: string | null;
+          status?: string;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["family_tasks"]["Insert"]>;
       };
       diary_reactions: {
         Row: {
