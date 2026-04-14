@@ -1,6 +1,4 @@
-import { familyLocations as mockLocations, places as mockPlaces, profiles as mockProfiles, schedules as mockSchedules } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getFamilyPreferences } from "@/lib/repositories/family-preferences";
 import { getProfileBoardData } from "@/lib/repositories/profiles";
@@ -36,16 +34,6 @@ function formatDateInput(value: string) {
 }
 
 export async function getLocationBoardData(): Promise<LocationBoardData> {
-  if (await shouldUseDemoData()) {
-    return {
-      familyLocations: mockLocations,
-      places: mockPlaces,
-      schedules: mockSchedules,
-      profiles: mockProfiles,
-      preferences: await getFamilyPreferences()
-    };
-  }
-
   const context = await getCurrentAppContext();
   const supabase = await createClient();
   const [locationsResult, placesResult, schedulesResult, profileBoard, preferences] = await Promise.all([
@@ -145,10 +133,6 @@ export async function createPlaceRegistration(input: {
   lng?: number;
   color?: string;
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("place_registrations")
@@ -180,10 +164,6 @@ export async function captureLocation(input: {
   placeId?: string;
   shareMode?: "manual" | "auto";
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("locations")

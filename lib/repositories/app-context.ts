@@ -1,7 +1,6 @@
 import type { User as AuthUser } from "@supabase/supabase-js";
-import { family, profiles, users } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types/supabase";
 
 export interface AppContext {
@@ -11,15 +10,6 @@ export interface AppContext {
   inviteCode: string;
 }
 
-function fallbackContext(): AppContext {
-  return {
-    appUserId: users[0].id,
-    familyId: family.id,
-    familyName: family.name,
-    inviteCode: family.inviteCode
-  };
-}
-
 function createProfileSeed(name: string) {
   return {
     display_name: name,
@@ -27,7 +17,7 @@ function createProfileSeed(name: string) {
     activities: [],
     bio: "",
     status: "はじめまして",
-    accent_color: profiles[0]?.accentColor ?? "bg-blush"
+    accent_color: "bg-blush"
   };
 }
 
@@ -46,11 +36,8 @@ function normalizeName(authUser: AuthUser) {
 }
 
 export async function ensureAppUserFromSession() {
-  if (await shouldUseDemoData()) {
-    return fallbackContext();
-  }
-
   const supabase = await createClient();
+  const admin = createAdminClient();
   const {
     data: { user: authUser }
   } = await supabase.auth.getUser();
@@ -60,7 +47,7 @@ export async function ensureAppUserFromSession() {
   }
 
   const name = normalizeName(authUser);
-  const { data: existingUser, error: existingUserError } = await supabase
+  const { data: existingUser, error: existingUserError } = await admin
     .from("users")
     .select("id")
     .or(`auth_user_id.eq.${authUser.id},email.eq.${authUser.email}`)
@@ -71,7 +58,7 @@ export async function ensureAppUserFromSession() {
     throw existingUserError;
   }
 
-  const { data: appUser, error: userError } = await supabase
+  const { data: appUser, error: userError } = await admin
     .from("users")
     .upsert(
       {
@@ -91,7 +78,7 @@ export async function ensureAppUserFromSession() {
     throw userError ?? new Error("Failed to sync signed-in user");
   }
 
-  const { error: profileError } = await supabase.from("profiles").upsert(
+  const { error: profileError } = await admin.from("profiles").upsert(
     {
       user_id: appUser.id,
       ...createProfileSeed(name)
@@ -105,7 +92,7 @@ export async function ensureAppUserFromSession() {
     throw profileError;
   }
 
-  const { data: membership, error: membershipError } = await supabase
+  const { data: membership, error: membershipError } = await admin
     .from("family_members")
     .select(
       `
@@ -129,12 +116,18 @@ export async function ensureAppUserFromSession() {
 
   return {
     appUserId: appUser.id,
-    familyId: membership?.family_id ?? family.id,
-    familyName: membership?.families?.name ?? family.name,
-    inviteCode: membership?.families?.invite_code ?? family.inviteCode
+    familyId: membership?.family_id ?? "",
+    familyName: membership?.families?.name ?? "",
+    inviteCode: membership?.families?.invite_code ?? ""
   };
 }
 
 export async function getCurrentAppContext() {
-  return (await ensureAppUserFromSession()) ?? fallbackContext();
+  const context = await ensureAppUserFromSession();
+
+  if (!context) {
+    throw new Error("Live app context could not be resolved.");
+  }
+
+  return context;
 }

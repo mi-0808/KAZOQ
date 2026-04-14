@@ -1,8 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { FamilyTask } from "@/types/domain";
 import type { Database } from "@/types/supabase";
+
+function isMissingFamilyTasksError(error: { code?: string | null; message?: string | null } | null) {
+  return error?.code === "PGRST205" || error?.message?.includes("public.family_tasks") || false;
+}
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -20,38 +23,13 @@ function formatDate(value: string | null) {
   }).format(date);
 }
 
-const mockTasks: FamilyTask[] = [
-  {
-    id: "task1",
-    familyId: "f1",
-    createdBy: "u1",
-    assigneeId: "u2",
-    title: "牛乳とたまごを買う",
-    note: "帰宅前にスーパーでお願いします",
-    dueDate: "4/13",
-    status: "open",
-    createdAt: "18:10"
-  },
-  {
-    id: "task2",
-    familyId: "f1",
-    createdBy: "u2",
-    assigneeId: "u3",
-    title: "明日の体育着を準備",
-    note: "",
-    dueDate: "4/13",
-    status: "open",
-    createdAt: "20:00"
-  }
-];
-
 export async function listFamilyTasks(familyId?: string): Promise<FamilyTask[]> {
-  if (await shouldUseDemoData()) {
-    return mockTasks;
-  }
-
   const context = await getCurrentAppContext();
   const resolvedFamilyId = familyId ?? context.familyId;
+
+  if (!resolvedFamilyId) {
+    return [];
+  }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("family_tasks")
@@ -61,8 +39,12 @@ export async function listFamilyTasks(familyId?: string): Promise<FamilyTask[]> 
     .order("created_at", { ascending: false })
     .returns<Database["public"]["Tables"]["family_tasks"]["Row"][]>();
 
-  if (error) {
+  if (error && !isMissingFamilyTasksError(error)) {
     throw error;
+  }
+
+  if (isMissingFamilyTasksError(error)) {
+    return [];
   }
 
   return (data ?? []).map((task) => ({
@@ -86,10 +68,6 @@ export async function createFamilyTask(input: {
   note?: string;
   dueDate?: string;
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const, id: mockTasks[0].id };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("family_tasks")
@@ -104,6 +82,10 @@ export async function createFamilyTask(input: {
     .select("id")
     .single<{ id: string }>();
 
+  if (isMissingFamilyTasksError(error)) {
+    return { mode: "supabase" as const, id: "family-tasks-unavailable" };
+  }
+
   if (error || !data) {
     throw error ?? new Error("Failed to create family task");
   }
@@ -112,10 +94,6 @@ export async function createFamilyTask(input: {
 }
 
 export async function updateFamilyTaskStatus(input: { taskId: string; status: FamilyTask["status"] }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const, id: input.taskId };
-  }
-
   const supabase = await createClient();
   const { error } = await supabase
     .from("family_tasks")
@@ -124,6 +102,10 @@ export async function updateFamilyTaskStatus(input: { taskId: string; status: Fa
       completed_at: input.status === "done" ? new Date().toISOString() : null
     })
     .eq("id", input.taskId);
+
+  if (isMissingFamilyTasksError(error)) {
+    return { mode: "supabase" as const, id: input.taskId };
+  }
 
   if (error) {
     throw error;

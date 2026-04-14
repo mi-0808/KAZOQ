@@ -1,7 +1,5 @@
-import { family, familyReports } from "@/data/mock-data";
 import { FamilyReportAction, FamilyReportThread } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import type { Database, Json } from "@/types/supabase";
 
@@ -54,13 +52,13 @@ function parseActions(payload: Json | null): FamilyReportAction[] {
   });
 }
 
-export async function listFamilyReports(familyId = family.id): Promise<FamilyReportThread[]> {
-  if (await shouldUseDemoData()) {
-    return familyReports;
-  }
-
+export async function listFamilyReports(familyId?: string): Promise<FamilyReportThread[]> {
   const context = await getCurrentAppContext();
   const resolvedFamilyId = familyId ?? context.familyId;
+
+  if (!resolvedFamilyId) {
+    return [];
+  }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("family_reports")
@@ -131,10 +129,6 @@ export async function updateFamilyReport(input: {
     parentId?: string;
   };
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
 
   if (input.status) {
@@ -175,10 +169,6 @@ export async function createFamilyReport(input: {
   requiresResponse?: boolean;
   actions?: FamilyReportAction[];
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data: report, error: reportError } = await supabase
     .from("family_reports")

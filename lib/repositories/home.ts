@@ -1,7 +1,5 @@
-import { family, familyReports, messages } from "@/data/mock-data";
 import { FavoriteFeature, FamilyPreferences, FamilyReportThread, FamilyTask, HomeShortcut, Message } from "@/types/domain";
-import { shouldUseDemoData } from "@/lib/config";
-import { buildFavoriteFeatures, buildHomeShortcuts, defaultFamilyPreferences } from "@/lib/family-preferences";
+import { buildFavoriteFeatures, buildHomeShortcuts } from "@/lib/family-preferences";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getFamilyPreferences } from "@/lib/repositories/family-preferences";
 import { listFamilyReports } from "@/lib/repositories/family-reports";
@@ -13,9 +11,9 @@ export interface HomeFeed {
   shortcuts: HomeShortcut[];
   favoriteFeatures: FavoriteFeature[];
   preferences: FamilyPreferences;
-  latestReport: FamilyReportThread;
+  latestReport: FamilyReportThread | null;
   reportPeek: FamilyReportThread[];
-  latestMessage: Message;
+  latestMessage: Message | null;
   tasks: FamilyTask[];
   summary: {
     unreadMessages: number;
@@ -24,27 +22,13 @@ export interface HomeFeed {
   };
 }
 
-export async function getHomeFeed(familyId = family.id): Promise<HomeFeed> {
-  if (await shouldUseDemoData()) {
-    return {
-      familyName: family.name,
-      shortcuts: buildHomeShortcuts(defaultFamilyPreferences.shortcutItemIds),
-      favoriteFeatures: buildFavoriteFeatures(defaultFamilyPreferences.favoriteItemIds),
-      preferences: defaultFamilyPreferences,
-      latestReport: familyReports[0],
-      reportPeek: familyReports.slice(0, 2),
-      latestMessage: messages[0],
-      tasks: [],
-      summary: {
-        unreadMessages: 2,
-        pendingReports: 1,
-        openTasks: 2
-      }
-    };
-  }
-
+export async function getHomeFeed(familyId?: string): Promise<HomeFeed> {
   const context = await getCurrentAppContext();
   const resolvedFamilyId = familyId ?? context.familyId;
+
+  if (!resolvedFamilyId) {
+    throw new Error("Family room context could not be resolved.");
+  }
   const [reports, messageList, preferences, tasks] = await Promise.all([
     listFamilyReports(resolvedFamilyId),
     listMessages(resolvedFamilyId),
@@ -57,9 +41,9 @@ export async function getHomeFeed(familyId = family.id): Promise<HomeFeed> {
     shortcuts: buildHomeShortcuts(preferences.shortcutItemIds),
     favoriteFeatures: buildFavoriteFeatures(preferences.favoriteItemIds),
     preferences,
-    latestReport: reports[0] ?? familyReports[0],
+    latestReport: reports[0] ?? null,
     reportPeek: reports.slice(0, 2),
-    latestMessage: messageList[0] ?? messages[0],
+    latestMessage: messageList[0] ?? null,
     tasks: tasks.slice(0, 4),
     summary: {
       unreadMessages: messageList.filter((message) => !message.readBy.includes(context.appUserId)).length,

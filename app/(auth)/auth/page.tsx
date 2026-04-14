@@ -13,7 +13,7 @@ export default async function AuthPage({
   const errorMessage = resolvedSearchParams?.error;
 
   if (!isSupabaseConfigured()) {
-    return <AuthScreen isSignedIn={false} hasFamilyRoom={false} errorMessage={errorMessage} />;
+    return <AuthScreen errorMessage={errorMessage} />;
   }
 
   const supabase = await createClient();
@@ -22,13 +22,13 @@ export default async function AuthPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <AuthScreen isSignedIn={false} hasFamilyRoom={false} errorMessage={errorMessage} />;
+    return <AuthScreen errorMessage={errorMessage} />;
   }
 
   const context = await ensureAppUserFromSession();
 
   if (!context) {
-    return <AuthScreen isSignedIn={false} hasFamilyRoom={false} errorMessage={errorMessage} />;
+    return <AuthScreen errorMessage={errorMessage} />;
   }
 
   const { data: membership, error } = await supabase
@@ -46,5 +46,5 @@ export default async function AuthPage({
     redirect(`/rooms/${membership.family_id}`);
   }
 
-  return <AuthScreen isSignedIn hasFamilyRoom={false} accountLabel={user.email ?? undefined} errorMessage={errorMessage} />;
+  redirect("/auth/family");
 }

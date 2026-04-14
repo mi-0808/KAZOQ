@@ -1,6 +1,4 @@
-import { places as mockPlaces, profiles as mockProfiles, schedules as mockSchedules } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getProfileBoardData } from "@/lib/repositories/profiles";
 import { PlaceRegistration, Profile, ScheduleItem } from "@/types/domain";
@@ -63,20 +61,6 @@ function buildWeekDays(schedules: ScheduleItem[]) {
 }
 
 export async function getCalendarBoardData(): Promise<CalendarBoardData> {
-  if (await shouldUseDemoData()) {
-    return {
-      weekDays: [
-        { day: "金", date: "4/11" },
-        { day: "土", date: "4/12" },
-        { day: "日", date: "4/13" },
-        { day: "月", date: "4/14" }
-      ],
-      schedules: mockSchedules,
-      places: mockPlaces,
-      profiles: mockProfiles
-    };
-  }
-
   const context = await getCurrentAppContext();
   const supabase = await createClient();
   const [scheduleResult, placesResult, profileBoard] = await Promise.all([
@@ -152,10 +136,6 @@ export async function createSchedule(input: {
   placeId?: string;
   note?: string;
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("schedules")
@@ -189,10 +169,6 @@ export async function updateSchedule(input: {
   placeId?: string;
   note?: string;
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { error } = await supabase
     .from("schedules")

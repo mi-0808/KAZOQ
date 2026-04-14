@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { defaultFamilyPreferences, sanitizeFamilyPreferences } from "@/lib/family-preferences";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { FamilyPreferences } from "@/types/domain";
@@ -17,11 +16,11 @@ type FamilySettingsRow = Pick<
   | "tasks_enabled"
 >;
 
-export async function getFamilyPreferences(familyId?: string): Promise<FamilyPreferences> {
-  if (await shouldUseDemoData()) {
-    return defaultFamilyPreferences;
-  }
+function isMissingColumnError(error: { code?: string | null } | null) {
+  return error?.code === "42703";
+}
 
+export async function getFamilyPreferences(familyId?: string): Promise<FamilyPreferences> {
   const context = await getCurrentAppContext();
   const resolvedFamilyId = familyId ?? context.familyId;
   const supabase = await createClient();
@@ -32,8 +31,27 @@ export async function getFamilyPreferences(familyId?: string): Promise<FamilyPre
     .limit(1)
     .maybeSingle<FamilySettingsRow>();
 
-  if (error) {
+  if (error && !isMissingColumnError(error)) {
     throw error;
+  }
+
+  if (isMissingColumnError(error)) {
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("families")
+      .select("id, menu_item_ids, shortcut_item_ids, favorite_item_ids")
+      .eq("id", resolvedFamilyId)
+      .limit(1)
+      .maybeSingle<Pick<FamilySettingsRow, "id" | "menu_item_ids" | "shortcut_item_ids" | "favorite_item_ids">>();
+
+    if (legacyError) {
+      throw legacyError;
+    }
+
+    return sanitizeFamilyPreferences({
+      menuItemIds: legacyData?.menu_item_ids ?? defaultFamilyPreferences.menuItemIds,
+      shortcutItemIds: legacyData?.shortcut_item_ids ?? defaultFamilyPreferences.shortcutItemIds,
+      favoriteItemIds: legacyData?.favorite_item_ids ?? defaultFamilyPreferences.favoriteItemIds
+    });
   }
 
   return sanitizeFamilyPreferences({
@@ -48,10 +66,6 @@ export async function getFamilyPreferences(familyId?: string): Promise<FamilyPre
 }
 
 export async function updateFamilyPreferences(familyId: string, preferences: FamilyPreferences) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const normalized = sanitizeFamilyPreferences(preferences);
   const { error } = await supabase
@@ -67,8 +81,23 @@ export async function updateFamilyPreferences(familyId: string, preferences: Fam
     })
     .eq("id", familyId);
 
-  if (error) {
+  if (error && !isMissingColumnError(error)) {
     throw error;
+  }
+
+  if (isMissingColumnError(error)) {
+    const { error: legacyError } = await supabase
+      .from("families")
+      .update({
+        menu_item_ids: normalized.menuItemIds,
+        shortcut_item_ids: normalized.shortcutItemIds,
+        favorite_item_ids: normalized.favoriteItemIds
+      })
+      .eq("id", familyId);
+
+    if (legacyError) {
+      throw legacyError;
+    }
   }
 
   return { mode: "supabase" as const, id: familyId };

@@ -3,7 +3,6 @@ import { HomeDashboard } from "@/components/home/home-dashboard";
 import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getHomeFeed } from "@/lib/repositories/home";
-import { shouldUseDemoData } from "@/lib/config";
 
 export default async function RoomPage({ params }: { params: Promise<{ familyId: string }> }) {
   const { familyId } = await params;
@@ -12,16 +11,14 @@ export default async function RoomPage({ params }: { params: Promise<{ familyId:
     notFound();
   }
 
-  if (!(await shouldUseDemoData())) {
-    const context = await getCurrentAppContext();
+  const context = await getCurrentAppContext();
 
-    if (!context.familyId) {
-      redirect("/auth");
-    }
+  if (!context.familyId) {
+    redirect("/auth");
+  }
 
-    if (context.familyId !== familyId) {
-      redirect(`/rooms/${context.familyId}`);
-    }
+  if (context.familyId !== familyId) {
+    redirect(`/rooms/${context.familyId}`);
   }
 
   const feed = await getHomeFeed(familyId);

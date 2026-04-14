@@ -12,6 +12,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/auth");
   }
 
+  if (isSupabaseConfigured() && sessionContext && !sessionContext.familyId) {
+    redirect("/auth/family");
+  }
+
   const [profileBoard, preferences] = await Promise.all([
     getProfileBoardData(sessionContext?.familyId),
     getFamilyPreferences(sessionContext?.familyId)

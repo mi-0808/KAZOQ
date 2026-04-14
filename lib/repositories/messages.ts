@@ -1,6 +1,4 @@
-import { family, messages as mockMessages } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { Message, MessageTemplatePayload } from "@/types/domain";
 import type { Database, Json } from "@/types/supabase";
@@ -66,12 +64,12 @@ function serializeTemplatePayload(payload?: MessageTemplatePayload): Json | null
 }
 
 export async function listMessages(familyId?: string): Promise<Message[]> {
-  if (await shouldUseDemoData()) {
-    return mockMessages;
-  }
-
   const context = await getCurrentAppContext();
-  const resolvedFamilyId = familyId ?? context.familyId ?? family.id;
+  const resolvedFamilyId = familyId ?? context.familyId;
+
+  if (!resolvedFamilyId) {
+    return [];
+  }
   const supabase = await createClient();
 
   const { data: messageRows, error: messageError } = await supabase
@@ -133,10 +131,6 @@ export async function createMessage(input: {
   body: string;
   templatePayload?: MessageTemplatePayload;
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("messages")
@@ -158,10 +152,6 @@ export async function createMessage(input: {
 }
 
 export async function markMessagesAsRead(input: { messageIds: string[]; userId: string }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const messageIds = Array.from(new Set(input.messageIds)).filter(Boolean);
 
   if (messageIds.length === 0) {

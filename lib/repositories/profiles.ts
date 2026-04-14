@@ -1,6 +1,4 @@
-import { family, profiles as mockProfiles } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { Family, FamilyMember, Profile } from "@/types/domain";
 import type { Database } from "@/types/supabase";
@@ -9,16 +7,6 @@ export interface ProfileBoardData {
   family: Family;
   profiles: Profile[];
   currentProfile: Profile;
-}
-
-const fallbackFamily: Family = family;
-
-function buildFallbackData(): ProfileBoardData {
-  return {
-    family: fallbackFamily,
-    profiles: mockProfiles,
-    currentProfile: mockProfiles[0]
-  };
 }
 
 function mapProfile(
@@ -39,12 +27,12 @@ function mapProfile(
 }
 
 export async function getProfileBoardData(familyId?: string): Promise<ProfileBoardData> {
-  if (await shouldUseDemoData()) {
-    return buildFallbackData();
-  }
-
   const context = await getCurrentAppContext();
-  const resolvedFamilyId = familyId ?? context.familyId ?? fallbackFamily.id;
+  const resolvedFamilyId = familyId ?? context.familyId;
+
+  if (!resolvedFamilyId) {
+    throw new Error("Family membership not found.");
+  }
   const supabase = await createClient();
 
   const { data: memberships, error: membershipError } = await supabase
@@ -58,8 +46,12 @@ export async function getProfileBoardData(familyId?: string): Promise<ProfileBoa
       >[]
     >();
 
-  if (membershipError || !memberships || memberships.length === 0) {
-    return buildFallbackData();
+  if (membershipError) {
+    throw membershipError;
+  }
+
+  if (!memberships || memberships.length === 0) {
+    throw new Error("Family members could not be loaded.");
   }
 
   const userIds = memberships.map((member) => member.user_id);
@@ -115,13 +107,17 @@ export async function getProfileBoardData(familyId?: string): Promise<ProfileBoa
     };
   });
 
-  const currentProfile = familyProfiles.find((profile) => profile.userId === context.appUserId) ?? familyProfiles[0] ?? mockProfiles[0];
+  const currentProfile = familyProfiles.find((profile) => profile.userId === context.appUserId) ?? familyProfiles[0];
+
+  if (!currentProfile) {
+    throw new Error("Current profile could not be resolved.");
+  }
 
   return {
     family: {
       id: familyResult.data?.id ?? resolvedFamilyId,
-      name: familyResult.data?.name ?? fallbackFamily.name,
-      inviteCode: familyResult.data?.invite_code ?? fallbackFamily.inviteCode,
+      name: familyResult.data?.name ?? "",
+      inviteCode: familyResult.data?.invite_code ?? "",
       members
     },
     profiles: familyProfiles,
@@ -138,10 +134,6 @@ export async function updateProfile(input: {
   status: string;
   activities: string[];
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
 
   const { error: userError } = await supabase

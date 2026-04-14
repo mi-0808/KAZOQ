@@ -9,8 +9,8 @@ import { ensureAppUserFromSession, getCurrentAppContext } from "@/lib/repositori
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-function redirectWithError(message: string) {
-  redirect(`/auth?error=${encodeURIComponent(message)}`);
+function redirectWithError(message: string, path = "/auth") {
+  redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
 function rethrowIfRedirect(error: unknown) {
@@ -49,7 +49,7 @@ async function resolvePostAuthRedirect(appUserId: string) {
     throw error;
   }
 
-  return membership ? `/rooms/${membership.family_id}` : "/auth";
+  return membership ? `/rooms/${membership.family_id}` : "/auth/family";
 }
 
 export async function signInAction(formData: FormData) {
@@ -137,13 +137,13 @@ export async function joinFamilyAction(formData: FormData) {
     const inviteCode = normalizeText(formData.get("inviteCode"));
 
     if (!inviteCode) {
-      redirectWithError("招待コードを入力してください。");
+      redirectWithError("招待コードを入力してください。", "/auth/family");
     }
 
     const supabase = await createClient();
     const context = await ensureAppUserFromSession();
     if (!context) {
-      redirectWithError("先にアカウントへログインしてください。");
+      redirectWithError("先にアカウントへログインしてください。", "/auth");
     }
 
     const relationLabel = normalizeText(formData.get("relationLabel")) || "家族";
@@ -157,7 +157,7 @@ export async function joinFamilyAction(formData: FormData) {
       .maybeSingle<{ id: string }>();
 
     if (familyError || !targetFamily) {
-      redirectWithError("招待コードに一致する家族ルームが見つかりませんでした。");
+      redirectWithError("招待コードに一致する家族ルームが見つかりませんでした。", "/auth/family");
     }
 
     const resolvedFamily = targetFamily!;
@@ -183,7 +183,7 @@ export async function joinFamilyAction(formData: FormData) {
     redirect(`/rooms/${resolvedFamily.id}`);
   } catch (error) {
     rethrowIfRedirect(error);
-    redirectWithError(error instanceof Error ? error.message : "家族グループへの参加に失敗しました。");
+    redirectWithError(error instanceof Error ? error.message : "家族グループへの参加に失敗しました。", "/auth/family");
   }
 }
 
@@ -205,13 +205,13 @@ export async function createFamilyRoomAction(formData: FormData) {
     });
 
     if (!familyName) {
-      redirectWithError("家族ルーム名を入力してください。");
+      redirectWithError("家族ルーム名を入力してください。", "/auth/family");
     }
 
     const supabase = await createClient();
     const context = await ensureAppUserFromSession();
     if (!context) {
-      redirectWithError("先にアカウント作成を完了してください。");
+      redirectWithError("先にアカウント作成を完了してください。", "/auth");
     }
 
     const resolvedContext = context!;
@@ -258,6 +258,6 @@ export async function createFamilyRoomAction(formData: FormData) {
     redirect(`/rooms/${createdFamily.id}`);
   } catch (error) {
     rethrowIfRedirect(error);
-    redirectWithError(error instanceof Error ? error.message : "家族ルーム作成に失敗しました。");
+    redirectWithError(error instanceof Error ? error.message : "家族ルーム作成に失敗しました。", "/auth/family");
   }
 }

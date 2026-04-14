@@ -1,6 +1,4 @@
-import { diaryEntries as mockDiaryEntries, profiles as mockProfiles } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import { shouldUseDemoData } from "@/lib/config";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getFamilyPreferences } from "@/lib/repositories/family-preferences";
 import { getProfileBoardData } from "@/lib/repositories/profiles";
@@ -22,14 +20,6 @@ function formatEntryDate(value: string) {
 }
 
 export async function getDiaryBoardData(): Promise<DiaryBoardData> {
-  if (await shouldUseDemoData()) {
-    return {
-      entries: mockDiaryEntries,
-      profiles: mockProfiles,
-      defaultVisibility: "family"
-    };
-  }
-
   const context = await getCurrentAppContext();
   const supabase = await createClient();
   const [entriesResult, profileBoard, preferences] = await Promise.all([
@@ -110,10 +100,6 @@ export async function createDiaryEntry(input: {
   concern: string;
   messageToFamily: string;
 }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("diary_entries")
@@ -138,10 +124,6 @@ export async function createDiaryEntry(input: {
 }
 
 export async function addDiaryReaction(input: { entryId: string; userId: string; emoji: string }) {
-  if (await shouldUseDemoData()) {
-    return { mode: "mock" as const };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("diary_reactions")

@@ -61,16 +61,20 @@ export function HomeDashboard({ feed }: { feed: HomeFeed }) {
             <div className="rounded-3xl border border-softline/70 bg-white px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold">最新の報連相</p>
-                <Chip color="bg-orange/45 text-ink">{latestReport.kind}</Chip>
+                {latestReport ? <Chip color="bg-orange/45 text-ink">{latestReport.kind}</Chip> : null}
               </div>
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink/78">{latestReport.summary}</p>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink/78">
+                {latestReport ? latestReport.summary : "まだ報連相はありません。必要な連絡が出たらここに表示されます。"}
+              </p>
             </div>
             <div className="rounded-3xl border border-softline/70 bg-white px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold">最新メッセージ</p>
-                <Chip>{latestMessage.category}</Chip>
+                {latestMessage ? <Chip>{latestMessage.category}</Chip> : null}
               </div>
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink/78">{latestMessage.body}</p>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink/78">
+                {latestMessage ? latestMessage.body : "まだメッセージはありません。家族のひとこと連絡がここに表示されます。"}
+              </p>
             </div>
           </div>
         </SectionCard>
@@ -143,23 +147,27 @@ export function HomeDashboard({ feed }: { feed: HomeFeed }) {
           </Link>
         }
       >
-        <div className="grid gap-3 md:grid-cols-2">
-          {reportPeek.map((thread) => (
-            <Link key={thread.id} href="/reports" className="rounded-3xl border border-softline/70 bg-white px-4 py-4 transition hover:bg-cream">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  <p className="font-semibold">{thread.title}</p>
+        {reportPeek.length === 0 ? (
+          <div className="rounded-3xl bg-white px-4 py-5 text-sm text-ink/70">まだ報連相はありません。ご飯確認や届出が発生したらここに並びます。</div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {reportPeek.map((thread) => (
+              <Link key={thread.id} href="/reports" className="rounded-3xl border border-softline/70 bg-white px-4 py-4 transition hover:bg-cream">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4" />
+                    <p className="font-semibold">{thread.title}</p>
+                  </div>
+                  <Chip color={thread.status === "完了" ? "bg-mint text-ink" : thread.status === "進行中" ? "bg-sky text-ink" : "bg-orange text-ink"}>
+                    {thread.status}
+                  </Chip>
                 </div>
-                <Chip color={thread.status === "完了" ? "bg-mint text-ink" : thread.status === "進行中" ? "bg-sky text-ink" : "bg-orange text-ink"}>
-                  {thread.status}
-                </Chip>
-              </div>
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink/75">{thread.summary}</p>
-              <p className="mt-3 text-xs text-ink/55">{thread.createdAt}</p>
-            </Link>
-          ))}
-        </div>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink/75">{thread.summary}</p>
+                <p className="mt-3 text-xs text-ink/55">{thread.createdAt}</p>
+              </Link>
+            ))}
+          </div>
+        )}
       </SectionCard>
     </div>
   );
