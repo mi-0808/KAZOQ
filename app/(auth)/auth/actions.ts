@@ -27,6 +27,11 @@ function normalizeText(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function normalizeErrorPath(formData: FormData, fallbackPath: string) {
+  const path = normalizeText(formData.get("errorPath"));
+  return path || fallbackPath;
+}
+
 function createInviteCode(name: string) {
   const prefix = name.replace(/\s+/g, "").slice(0, 4).toUpperCase() || "KAZO";
   return `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
@@ -53,6 +58,7 @@ async function resolvePostAuthRedirect(appUserId: string) {
 }
 
 export async function signInAction(formData: FormData) {
+  const errorPath = normalizeErrorPath(formData, "/auth/login");
   try {
     if (!isSupabaseConfigured()) {
       redirect("/home");
@@ -62,14 +68,14 @@ export async function signInAction(formData: FormData) {
     const password = normalizeText(formData.get("password"));
 
     if (!email || !password) {
-      redirectWithError("メールアドレスとパスワードを入力してください。");
+      redirectWithError("メールアドレスとパスワードを入力してください。", errorPath);
     }
 
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      redirectWithError(error.message);
+      redirectWithError(error.message, errorPath);
     }
 
     const context = await getCurrentAppContext();
@@ -77,11 +83,12 @@ export async function signInAction(formData: FormData) {
     redirect(await resolvePostAuthRedirect(context.appUserId));
   } catch (error) {
     rethrowIfRedirect(error);
-    redirectWithError(error instanceof Error ? error.message : "ログインに失敗しました。");
+    redirectWithError(error instanceof Error ? error.message : "ログインに失敗しました。", errorPath);
   }
 }
 
 export async function signUpAction(formData: FormData) {
+  const errorPath = normalizeErrorPath(formData, "/auth/signup");
   try {
     if (!isSupabaseConfigured()) {
       redirect("/home");
@@ -92,7 +99,7 @@ export async function signUpAction(formData: FormData) {
     const name = normalizeText(formData.get("name"));
 
     if (!email || !password) {
-      redirectWithError("メールアドレスとパスワードを入力してください。");
+      redirectWithError("メールアドレスとパスワードを入力してください。", errorPath);
     }
 
     const admin = createAdminClient();
@@ -106,7 +113,7 @@ export async function signUpAction(formData: FormData) {
     });
 
     if (createError) {
-      redirectWithError(createError.message);
+      redirectWithError(createError.message, errorPath);
     }
 
     const supabase = await createClient();
@@ -116,7 +123,7 @@ export async function signUpAction(formData: FormData) {
     });
 
     if (signInError) {
-      redirectWithError(signInError.message);
+      redirectWithError(signInError.message, errorPath);
     }
 
     const context = await getCurrentAppContext();
@@ -124,7 +131,7 @@ export async function signUpAction(formData: FormData) {
     redirect(await resolvePostAuthRedirect(context.appUserId));
   } catch (error) {
     rethrowIfRedirect(error);
-    redirectWithError(error instanceof Error ? error.message : "新規登録に失敗しました。");
+    redirectWithError(error instanceof Error ? error.message : "新規登録に失敗しました。", errorPath);
   }
 }
 

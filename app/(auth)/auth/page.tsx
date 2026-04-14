@@ -1,19 +1,12 @@
 import { redirect } from "next/navigation";
-import { AuthScreen } from "@/components/shared/auth-screen";
+import { AuthChoiceScreen } from "@/components/shared/auth-choice-screen";
 import { createClient } from "@/lib/supabase/server";
 import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
 import { isSupabaseConfigured } from "@/lib/config";
 
-export default async function AuthPage({
-  searchParams
-}: {
-  searchParams?: Promise<{ error?: string }>;
-}) {
-  const resolvedSearchParams = await searchParams;
-  const errorMessage = resolvedSearchParams?.error;
-
+export default async function AuthPage() {
   if (!isSupabaseConfigured()) {
-    return <AuthScreen errorMessage={errorMessage} />;
+    return <AuthChoiceScreen />;
   }
 
   const supabase = await createClient();
@@ -22,13 +15,13 @@ export default async function AuthPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <AuthScreen errorMessage={errorMessage} />;
+    return <AuthChoiceScreen />;
   }
 
   const context = await ensureAppUserFromSession();
 
   if (!context) {
-    return <AuthScreen errorMessage={errorMessage} />;
+    return <AuthChoiceScreen />;
   }
 
   const { data: membership, error } = await supabase

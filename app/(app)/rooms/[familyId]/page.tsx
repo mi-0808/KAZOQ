@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
+import { defaultFamilyPreferences } from "@/lib/family-preferences";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getHomeFeed } from "@/lib/repositories/home";
 
@@ -21,7 +22,22 @@ export default async function RoomPage({ params }: { params: Promise<{ familyId:
     redirect(`/rooms/${context.familyId}`);
   }
 
-  const feed = await getHomeFeed(familyId);
+  const feed =
+    (await getHomeFeed(familyId).catch(() => null)) ?? {
+      familyName: context.familyName || "家族ルーム",
+      shortcuts: [],
+      favoriteFeatures: [],
+      preferences: defaultFamilyPreferences,
+      latestReport: null,
+      reportPeek: [],
+      latestMessage: null,
+      tasks: [],
+      summary: {
+        unreadMessages: 0,
+        pendingReports: 0,
+        openTasks: 0
+      }
+    };
 
   return (
     <>

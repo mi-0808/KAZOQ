@@ -39,15 +39,15 @@ export function TopLanding() {
                 家庭の中で見やすく残せる生活連携アプリです。
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/auth#login" className="inline-flex items-center gap-2 rounded-3xl bg-coral px-5 py-3 font-semibold text-white shadow-sticker">
+                <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-3xl bg-coral px-5 py-3 font-semibold text-white shadow-sticker">
                   <LogIn className="h-4 w-4" />
                   ログイン
                 </Link>
-                <Link href="/auth#login" className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 font-semibold text-ink shadow-sticker">
+                <Link href="/auth/signup" className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 font-semibold text-ink shadow-sticker">
                   <UserPlus className="h-4 w-4" />
                   新規登録
                 </Link>
-                <Link href="/auth" className="inline-flex items-center gap-2 rounded-3xl bg-cream px-5 py-3 font-semibold text-ink">
+                <Link href="/auth/signup" className="inline-flex items-center gap-2 rounded-3xl bg-cream px-5 py-3 font-semibold text-ink">
                   家族ルームを作る
                   <ArrowRight className="h-4 w-4" />
                 </Link>
