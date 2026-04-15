@@ -16,24 +16,28 @@ export default async function SignupPage({
     return <AuthCredentialScreen mode="signup" errorMessage={errorMessage} />;
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
 
-  if (!user) {
+    if (!user) {
+      return <AuthCredentialScreen mode="signup" errorMessage={errorMessage} />;
+    }
+
+    const context = await ensureAppUserFromSession();
+
+    if (!context) {
+      return <AuthCredentialScreen mode="signup" errorMessage={errorMessage} />;
+    }
+
+    if (context.familyId) {
+      redirect(`/rooms/${context.familyId}`);
+    }
+
+    redirect("/auth/family");
+  } catch {
     return <AuthCredentialScreen mode="signup" errorMessage={errorMessage} />;
   }
-
-  const context = await ensureAppUserFromSession();
-
-  if (!context) {
-    return <AuthCredentialScreen mode="signup" errorMessage={errorMessage} />;
-  }
-
-  if (context.familyId) {
-    redirect(`/rooms/${context.familyId}`);
-  }
-
-  redirect("/auth/family");
 }

@@ -16,19 +16,23 @@ export default async function FamilySetupPage({
     redirect("/auth");
   }
 
-  const context = await ensureAppUserFromSession();
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  try {
+    const context = await ensureAppUserFromSession();
+    const supabase = await createClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
 
-  if (!context || !user) {
+    if (!context || !user) {
+      redirect("/auth");
+    }
+
+    if (context.familyId) {
+      redirect(`/rooms/${context.familyId}`);
+    }
+
+    return <FamilyRoomSetupScreen accountLabel={user.email ?? undefined} errorMessage={errorMessage} />;
+  } catch {
     redirect("/auth");
   }
-
-  if (context.familyId) {
-    redirect(`/rooms/${context.familyId}`);
-  }
-
-  return <FamilyRoomSetupScreen accountLabel={user.email ?? undefined} errorMessage={errorMessage} />;
 }

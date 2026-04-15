@@ -9,35 +9,39 @@ export default async function AuthPage() {
     return <AuthChoiceScreen />;
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
 
-  if (!user) {
+    if (!user) {
+      return <AuthChoiceScreen />;
+    }
+
+    const context = await ensureAppUserFromSession();
+
+    if (!context) {
+      return <AuthChoiceScreen />;
+    }
+
+    const { data: membership, error } = await supabase
+      .from("family_members")
+      .select("family_id")
+      .eq("user_id", context.appUserId)
+      .limit(1)
+      .maybeSingle<{ family_id: string }>();
+
+    if (error) {
+      return <AuthChoiceScreen />;
+    }
+
+    if (membership) {
+      redirect(`/rooms/${membership.family_id}`);
+    }
+
+    redirect("/auth/family");
+  } catch {
     return <AuthChoiceScreen />;
   }
-
-  const context = await ensureAppUserFromSession();
-
-  if (!context) {
-    return <AuthChoiceScreen />;
-  }
-
-  const { data: membership, error } = await supabase
-    .from("family_members")
-    .select("family_id")
-    .eq("user_id", context.appUserId)
-    .limit(1)
-    .maybeSingle<{ family_id: string }>();
-
-  if (error) {
-    throw error;
-  }
-
-  if (membership) {
-    redirect(`/rooms/${membership.family_id}`);
-  }
-
-  redirect("/auth/family");
 }

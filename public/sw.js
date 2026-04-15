@@ -1,5 +1,23 @@
-const CACHE_NAME = "kazoq-v2";
+const CACHE_NAME = "kazoq-v3";
 const APP_SHELL = ["/", "/auth", "/home", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+
+function isCacheableRequest(request) {
+  const url = new URL(request.url);
+
+  if (request.method !== "GET") {
+    return false;
+  }
+
+  if (url.origin !== self.location.origin) {
+    return false;
+  }
+
+  if (url.pathname.startsWith("/_next/")) {
+    return false;
+  }
+
+  return true;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -27,7 +45,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") {
+  if (!isCacheableRequest(event.request)) {
     return;
   }
 
@@ -39,6 +57,10 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(event.request)
         .then((networkResponse) => {
+          if (!networkResponse.ok || networkResponse.type !== "basic") {
+            return networkResponse;
+          }
+
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
