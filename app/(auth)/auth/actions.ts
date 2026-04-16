@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { revalidatePath } from "next/cache";
-import { isSupabaseConfigured } from "@/lib/config";
+import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/config";
 import { sanitizeFamilyPreferences } from "@/lib/family-preferences";
 import { ensureAppUserFromSession, getCurrentAppContext } from "@/lib/repositories/app-context";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -92,6 +92,10 @@ export async function signUpAction(formData: FormData) {
   try {
     if (!isSupabaseConfigured()) {
       redirect("/home");
+    }
+
+    if (!isSupabaseAdminConfigured()) {
+      redirectWithError("新規登録の設定が未完了です。SUPABASE_SERVICE_ROLE_KEY を確認してください。", errorPath);
     }
 
     const email = normalizeEmail(formData.get("email"));

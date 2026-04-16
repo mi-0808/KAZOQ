@@ -1,6 +1,7 @@
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseAdminConfigured } from "@/lib/config";
 import type { Database } from "@/types/supabase";
 
 export interface AppContext {
@@ -37,7 +38,6 @@ function normalizeName(authUser: AuthUser) {
 
 export async function ensureAppUserFromSession() {
   const supabase = await createClient();
-  const admin = createAdminClient();
   const {
     data: { user: authUser }
   } = await supabase.auth.getUser();
@@ -45,6 +45,12 @@ export async function ensureAppUserFromSession() {
   if (!authUser || !authUser.email) {
     return null;
   }
+
+  if (!isSupabaseAdminConfigured()) {
+    return null;
+  }
+
+  const admin = createAdminClient();
 
   const name = normalizeName(authUser);
   const { data: existingUser, error: existingUserError } = await admin

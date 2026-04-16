@@ -7,7 +7,13 @@ import { getFamilyPreferences } from "@/lib/repositories/family-preferences";
 import { getProfileBoardData } from "@/lib/repositories/profiles";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const sessionContext = await ensureAppUserFromSession();
+  let sessionContext = null;
+
+  try {
+    sessionContext = await ensureAppUserFromSession();
+  } catch {
+    redirect("/auth");
+  }
 
   if (isSupabaseConfigured() && !sessionContext) {
     redirect("/auth");
