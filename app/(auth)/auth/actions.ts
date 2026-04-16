@@ -170,7 +170,8 @@ export async function joinFamilyAction(formData: FormData) {
     const relationLabel = normalizeText(formData.get("relationLabel")) || "家族";
     const roleLabel = normalizeText(formData.get("roleLabel")) || "その他";
 
-    const { data: targetFamily, error: familyError } = await supabase
+    const lookupClient = isSupabaseAdminConfigured() ? createAdminClient() : supabase;
+    const { data: targetFamily, error: familyError } = await lookupClient
       .from("families")
       .select("id")
       .eq("invite_code", inviteCode)
