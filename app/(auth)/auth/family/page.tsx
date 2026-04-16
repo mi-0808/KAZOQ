@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { FamilyRoomSetupScreen } from "@/components/shared/family-room-setup-screen";
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/config";
 import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
 import { createClient } from "@/lib/supabase/server";
@@ -13,21 +13,22 @@ export default async function FamilySetupPage({
   const errorMessage = resolvedSearchParams?.error;
 
   if (!isSupabaseConfigured()) {
-    redirect("/auth");
+    return <FamilyRoomSetupScreen accountLabel="デモアカウント" errorMessage={errorMessage} />;
   }
 
   try {
-    const context = await ensureAppUserFromSession();
     const supabase = await createClient();
     const {
       data: { user }
     } = await supabase.auth.getUser();
 
-    if (!context || !user) {
+    if (!user) {
       redirect("/auth");
     }
 
-    if (context.familyId) {
+    const context = await ensureAppUserFromSession();
+
+    if (context?.familyId) {
       redirect(`/rooms/${context.familyId}`);
     }
 

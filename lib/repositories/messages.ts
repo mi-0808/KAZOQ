@@ -1,3 +1,5 @@
+import { messages } from "@/data/mock-data";
+import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { Message, MessageTemplatePayload } from "@/types/domain";
@@ -70,58 +72,66 @@ export async function listMessages(familyId?: string): Promise<Message[]> {
   if (!resolvedFamilyId) {
     return [];
   }
-  const supabase = await createClient();
 
-  const { data: messageRows, error: messageError } = await supabase
-    .from("messages")
-    .select("id, family_id, author_id, category, body, payload, created_at")
-    .eq("family_id", resolvedFamilyId)
-    .order("created_at", { ascending: false })
-    .returns<
-      Pick<
-        Database["public"]["Tables"]["messages"]["Row"],
-        "id" | "family_id" | "author_id" | "category" | "body" | "payload" | "created_at"
-      >[]
-    >();
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
 
-  if (messageError) {
-    throw messageError;
+    const { data: messageRows, error: messageError } = await supabase
+      .from("messages")
+      .select("id, family_id, author_id, category, body, payload, created_at")
+      .eq("family_id", resolvedFamilyId)
+      .order("created_at", { ascending: false })
+      .returns<
+        Pick<
+          Database["public"]["Tables"]["messages"]["Row"],
+          "id" | "family_id" | "author_id" | "category" | "body" | "payload" | "created_at"
+        >[]
+      >();
+
+    if (messageError) {
+      throw messageError;
+    }
+
+    const { data: readRows, error: readsError } = await supabase
+      .from("message_reads")
+      .select("message_id, user_id")
+      .in(
+        "message_id",
+        (messageRows ?? []).map((message) => message.id)
+      )
+      .returns<Pick<Database["public"]["Tables"]["message_reads"]["Row"], "message_id" | "user_id">[]>();
+
+    if (readsError) {
+      throw readsError;
+    }
+
+    const readMap = new Map<string, string[]>();
+    for (const row of readRows ?? []) {
+      readMap.set(row.message_id, [...(readMap.get(row.message_id) ?? []), row.user_id]);
+    }
+
+    return (messageRows ?? []).map((message) => {
+      const templatePayload = parseTemplatePayload(message.payload);
+      return {
+        id: message.id,
+        familyId: message.family_id,
+        authorId: message.author_id,
+        category: message.category as Message["category"],
+        body: message.body,
+        createdAt: formatTime(message.created_at),
+        readBy: readMap.get(message.id) ?? [],
+        templateType: templatePayload ? templateCategoryMap[message.category as Message["category"]] : undefined,
+        templatePayload
+      };
+    });
   }
 
-  const { data: readRows, error: readsError } = await supabase
-    .from("message_reads")
-    .select("message_id, user_id")
-    .in(
-      "message_id",
-      (messageRows ?? []).map((message) => message.id)
-    )
-    .returns<Pick<Database["public"]["Tables"]["message_reads"]["Row"], "message_id" | "user_id">[]>();
-
-  if (readsError) {
-    throw readsError;
-  }
-
-  const readMap = new Map<string, string[]>();
-
-  for (const row of readRows ?? []) {
-    readMap.set(row.message_id, [...(readMap.get(row.message_id) ?? []), row.user_id]);
-  }
-
-  return (messageRows ?? []).map((message) => {
-    const templatePayload = parseTemplatePayload(message.payload);
-
-    return {
-      id: message.id,
-      familyId: message.family_id,
-      authorId: message.author_id,
-      category: message.category as Message["category"],
-      body: message.body,
-      createdAt: formatTime(message.created_at),
-      readBy: readMap.get(message.id) ?? [],
-      templateType: templatePayload ? templateCategoryMap[message.category as Message["category"]] : undefined,
-      templatePayload
-    };
-  });
+  return messages
+    .filter((message) => message.familyId === resolvedFamilyId)
+    .map((message) => ({
+      ...message,
+      templateType: message.templatePayload ? templateCategoryMap[message.category] : message.templateType
+    }));
 }
 
 export async function createMessage(input: {
@@ -131,6 +141,10 @@ export async function createMessage(input: {
   body: string;
   templatePayload?: MessageTemplatePayload;
 }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: `message-${Date.now()}`, payload: serializeTemplatePayload(input.templatePayload) };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("messages")
@@ -156,6 +170,10 @@ export async function markMessagesAsRead(input: { messageIds: string[]; userId: 
 
   if (messageIds.length === 0) {
     return { mode: "supabase" as const };
+  }
+
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, ids: messageIds, userId: input.userId };
   }
 
   const supabase = await createClient();

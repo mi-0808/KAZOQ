@@ -1,47 +1,25 @@
-import { redirect } from "next/navigation";
 import { AuthChoiceScreen } from "@/components/shared/auth-choice-screen";
-import { createClient } from "@/lib/supabase/server";
-import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/config";
+import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AuthPage() {
-  if (!isSupabaseConfigured()) {
-    return <AuthChoiceScreen />;
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const context = await ensureAppUserFromSession();
+        redirect(context?.familyId ? `/rooms/${context.familyId}` : "/auth/family");
+      }
+    } catch {
+      // Fall back to the auth landing screen when session resolution fails.
+    }
   }
 
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return <AuthChoiceScreen />;
-    }
-
-    const context = await ensureAppUserFromSession();
-
-    if (!context) {
-      return <AuthChoiceScreen />;
-    }
-
-    const { data: membership, error } = await supabase
-      .from("family_members")
-      .select("family_id")
-      .eq("user_id", context.appUserId)
-      .limit(1)
-      .maybeSingle<{ family_id: string }>();
-
-    if (error) {
-      return <AuthChoiceScreen />;
-    }
-
-    if (membership) {
-      redirect(`/rooms/${membership.family_id}`);
-    }
-
-    redirect("/auth/family");
-  } catch {
-    return <AuthChoiceScreen />;
-  }
+  return <AuthChoiceScreen />;
 }

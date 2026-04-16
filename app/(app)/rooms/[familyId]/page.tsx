@@ -14,10 +14,6 @@ export default async function RoomPage({ params }: { params: Promise<{ familyId:
 
   const context = await getCurrentAppContext();
 
-  if (!context.familyId) {
-    redirect("/auth");
-  }
-
   if (context.familyId !== familyId) {
     redirect(`/rooms/${context.familyId}`);
   }

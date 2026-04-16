@@ -1,3 +1,4 @@
+import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { defaultFamilyPreferences, sanitizeFamilyPreferences } from "@/lib/family-preferences";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
@@ -21,8 +22,17 @@ function isMissingColumnError(error: { code?: string | null } | null) {
 }
 
 export async function getFamilyPreferences(familyId?: string): Promise<FamilyPreferences> {
+  if (!isSupabaseConfigured()) {
+    return sanitizeFamilyPreferences(defaultFamilyPreferences);
+  }
+
   const context = await getCurrentAppContext();
   const resolvedFamilyId = familyId ?? context.familyId;
+
+  if (!resolvedFamilyId) {
+    return sanitizeFamilyPreferences(defaultFamilyPreferences);
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("families")
@@ -66,8 +76,13 @@ export async function getFamilyPreferences(familyId?: string): Promise<FamilyPre
 }
 
 export async function updateFamilyPreferences(familyId: string, preferences: FamilyPreferences) {
-  const supabase = await createClient();
   const normalized = sanitizeFamilyPreferences(preferences);
+
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: familyId, preferences: normalized };
+  }
+
+  const supabase = await createClient();
   const { error } = await supabase
     .from("families")
     .update({

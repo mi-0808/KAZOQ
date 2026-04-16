@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { revalidatePath } from "next/cache";
-import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/config";
+import { family } from "@/data/mock-data";
+import { isSupabaseConfigured } from "@/lib/config";
 import { sanitizeFamilyPreferences } from "@/lib/family-preferences";
-import { ensureAppUserFromSession, getCurrentAppContext } from "@/lib/repositories/app-context";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
+import { getSiteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 
 function redirectWithError(message: string, path = "/auth") {
@@ -41,27 +42,17 @@ function normalizeMultiSelect(formData: FormData, key: string) {
   return formData.getAll(key).filter((value): value is string => typeof value === "string").map((value) => value.trim());
 }
 
-async function resolvePostAuthRedirect(appUserId: string) {
-  const supabase = await createClient();
-  const { data: membership, error } = await supabase
-    .from("family_members")
-    .select("family_id")
-    .eq("user_id", appUserId)
-    .limit(1)
-    .maybeSingle<{ family_id: string }>();
-
-  if (error) {
-    throw error;
-  }
-
-  return membership ? `/rooms/${membership.family_id}` : "/auth/family";
+function redirectToDemoRoom() {
+  revalidatePath("/", "layout");
+  redirect(`/rooms/${family.id}`);
 }
 
 export async function signInAction(formData: FormData) {
   const errorPath = normalizeErrorPath(formData, "/auth/login");
+
   try {
     if (!isSupabaseConfigured()) {
-      redirect("/home");
+      redirectToDemoRoom();
     }
 
     const email = normalizeEmail(formData.get("email"));
@@ -78,9 +69,8 @@ export async function signInAction(formData: FormData) {
       redirectWithError(error.message, errorPath);
     }
 
-    const context = await getCurrentAppContext();
     revalidatePath("/", "layout");
-    redirect(await resolvePostAuthRedirect(context.appUserId));
+    redirect("/auth/family");
   } catch (error) {
     rethrowIfRedirect(error);
     redirectWithError(error instanceof Error ? error.message : "ログインに失敗しました。", errorPath);
@@ -89,13 +79,10 @@ export async function signInAction(formData: FormData) {
 
 export async function signUpAction(formData: FormData) {
   const errorPath = normalizeErrorPath(formData, "/auth/signup");
+
   try {
     if (!isSupabaseConfigured()) {
-      redirect("/home");
-    }
-
-    if (!isSupabaseAdminConfigured()) {
-      redirectWithError("新規登録の設定が未完了です。SUPABASE_SERVICE_ROLE_KEY を確認してください。", errorPath);
+      redirect("/auth/family");
     }
 
     const email = normalizeEmail(formData.get("email"));
@@ -106,33 +93,31 @@ export async function signUpAction(formData: FormData) {
       redirectWithError("メールアドレスとパスワードを入力してください。", errorPath);
     }
 
-    const admin = createAdminClient();
-    const { error: createError } = await admin.auth.admin.createUser({
+    const supabase = await createClient();
+    const {
+      data: { session },
+      error
+    } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true,
-      user_metadata: {
-        name: name || email.split("@")[0]
+      options: {
+        emailRedirectTo: getSiteUrl(),
+        data: {
+          name: name || email.split("@")[0]
+        }
       }
     });
 
-    if (createError) {
-      redirectWithError(createError.message, errorPath);
+    if (error) {
+      redirectWithError(error.message, errorPath);
     }
 
-    const supabase = await createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (signInError) {
-      redirectWithError(signInError.message, errorPath);
+    if (!session) {
+      redirect("/auth/login?message=" + encodeURIComponent("確認メールを開いたあと、ログインして続けてください。"));
     }
 
-    const context = await getCurrentAppContext();
     revalidatePath("/", "layout");
-    redirect(await resolvePostAuthRedirect(context.appUserId));
+    redirect("/auth/family");
   } catch (error) {
     rethrowIfRedirect(error);
     redirectWithError(error instanceof Error ? error.message : "新規登録に失敗しました。", errorPath);
@@ -142,7 +127,7 @@ export async function signUpAction(formData: FormData) {
 export async function joinFamilyAction(formData: FormData) {
   try {
     if (!isSupabaseConfigured()) {
-      redirect("/home");
+      redirectToDemoRoom();
     }
 
     const inviteCode = normalizeText(formData.get("inviteCode"));
@@ -153,9 +138,12 @@ export async function joinFamilyAction(formData: FormData) {
 
     const supabase = await createClient();
     const context = await ensureAppUserFromSession();
+
     if (!context) {
       redirectWithError("先にアカウントへログインしてください。", "/auth");
     }
+
+    const resolvedContext = context!;
 
     const relationLabel = normalizeText(formData.get("relationLabel")) || "家族";
     const roleLabel = normalizeText(formData.get("roleLabel")) || "その他";
@@ -172,7 +160,6 @@ export async function joinFamilyAction(formData: FormData) {
     }
 
     const resolvedFamily = targetFamily!;
-    const resolvedContext = context!;
 
     const { error: memberError } = await supabase.from("family_members").upsert(
       {
@@ -201,7 +188,7 @@ export async function joinFamilyAction(formData: FormData) {
 export async function createFamilyRoomAction(formData: FormData) {
   try {
     if (!isSupabaseConfigured()) {
-      redirect("/home");
+      redirectToDemoRoom();
     }
 
     const familyName = normalizeText(formData.get("familyName"));
@@ -221,11 +208,13 @@ export async function createFamilyRoomAction(formData: FormData) {
 
     const supabase = await createClient();
     const context = await ensureAppUserFromSession();
+
     if (!context) {
       redirectWithError("先にアカウント作成を完了してください。", "/auth");
     }
 
     const resolvedContext = context!;
+
     const inviteCode = createInviteCode(familyName);
 
     const { data: createdFamily, error: familyError } = await supabase
@@ -256,7 +245,7 @@ export async function createFamilyRoomAction(formData: FormData) {
       throw memberError;
     }
 
-    await supabase
+    const { error: profileError } = await supabase
       .from("profiles")
       .update({
         family_role: roleLabel,
@@ -264,6 +253,10 @@ export async function createFamilyRoomAction(formData: FormData) {
         status
       })
       .eq("user_id", resolvedContext.appUserId);
+
+    if (profileError) {
+      throw profileError;
+    }
 
     revalidatePath("/", "layout");
     redirect(`/rooms/${createdFamily.id}`);

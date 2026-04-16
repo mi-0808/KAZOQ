@@ -7,13 +7,7 @@ import { getFamilyPreferences } from "@/lib/repositories/family-preferences";
 import { getProfileBoardData } from "@/lib/repositories/profiles";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  let sessionContext = null;
-
-  try {
-    sessionContext = await ensureAppUserFromSession();
-  } catch {
-    redirect("/auth");
-  }
+  const sessionContext = await ensureAppUserFromSession();
 
   if (isSupabaseConfigured() && !sessionContext) {
     redirect("/auth");
@@ -38,9 +32,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ]);
 
     shellData = {
-      familyName: profileBoard.family.name,
-      inviteCode: profileBoard.family.inviteCode,
-      familyId: profileBoard.family.id,
+      familyName: sessionContext?.familyName || profileBoard.family.name,
+      inviteCode: sessionContext?.inviteCode || profileBoard.family.inviteCode,
+      familyId: sessionContext?.familyId || profileBoard.family.id,
       profiles: profileBoard.profiles,
       menuItemIds: preferences.menuItemIds
     };
@@ -60,7 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       inviteCode={shellData.inviteCode}
       profiles={shellData.profiles}
       menuItemIds={shellData.menuItemIds as typeof defaultFamilyPreferences.menuItemIds}
-      homeHref={`/rooms/${shellData.familyId}`}
+      homeHref={`/rooms/${shellData.familyId || "f1"}`}
     >
       {children}
     </AppShell>

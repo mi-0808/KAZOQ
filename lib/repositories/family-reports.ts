@@ -1,7 +1,9 @@
 import { FamilyReportAction, FamilyReportThread } from "@/types/domain";
+import { familyReports } from "@/data/mock-data";
+import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
-import type { Database, Json } from "@/types/supabase";
+import type { Database } from "@/types/supabase";
 
 function normalizeCreatedAt(value: string) {
   const date = new Date(value);
@@ -16,42 +18,6 @@ function normalizeCreatedAt(value: string) {
   }).format(date);
 }
 
-function parseActions(payload: Json | null): FamilyReportAction[] {
-  if (!Array.isArray(payload)) {
-    return [];
-  }
-
-  return payload.flatMap((item) => {
-    if (!item || typeof item !== "object") {
-      return [];
-    }
-
-    const record = item as Record<string, Json>;
-
-    if (
-      typeof record.id !== "string" ||
-      typeof record.authorId !== "string" ||
-      typeof record.label !== "string" ||
-      typeof record.body !== "string" ||
-      typeof record.createdAt !== "string"
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        id: record.id,
-        parentId: typeof record.parentId === "string" ? record.parentId : undefined,
-        authorId: record.authorId,
-        label: record.label,
-        body: record.body,
-        createdAt: record.createdAt,
-        tone: typeof record.tone === "string" ? (record.tone as FamilyReportAction["tone"]) : undefined
-      }
-    ];
-  });
-}
-
 export async function listFamilyReports(familyId?: string): Promise<FamilyReportThread[]> {
   const context = await getCurrentAppContext();
   const resolvedFamilyId = familyId ?? context.familyId;
@@ -59,63 +25,68 @@ export async function listFamilyReports(familyId?: string): Promise<FamilyReport
   if (!resolvedFamilyId) {
     return [];
   }
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("family_reports")
-    .select(
-      `
-        id,
-        family_id,
-        kind,
-        title,
-        summary,
-        status,
-        requires_response,
-        created_at,
-        family_report_actions (
-          id,
-          parent_action_id,
-          author_id,
-          label,
-          body,
-          tone,
-          created_at
-        )
-      `
-    )
-    .eq("family_id", resolvedFamilyId)
-    .order("created_at", { ascending: false })
-    .returns<
-      Array<
-        Database["public"]["Tables"]["family_reports"]["Row"] & {
-          family_report_actions: Database["public"]["Tables"]["family_report_actions"]["Row"][];
-        }
-      >
-    >();
 
-  if (error) {
-    throw error;
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("family_reports")
+      .select(
+        `
+          id,
+          family_id,
+          kind,
+          title,
+          summary,
+          status,
+          requires_response,
+          created_at,
+          family_report_actions (
+            id,
+            parent_action_id,
+            author_id,
+            label,
+            body,
+            tone,
+            created_at
+          )
+        `
+      )
+      .eq("family_id", resolvedFamilyId)
+      .order("created_at", { ascending: false })
+      .returns<
+        Array<
+          Database["public"]["Tables"]["family_reports"]["Row"] & {
+            family_report_actions: Database["public"]["Tables"]["family_report_actions"]["Row"][];
+          }
+        >
+      >();
+
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []).map((report) => ({
+      id: report.id,
+      familyId: report.family_id,
+      kind: report.kind as FamilyReportThread["kind"],
+      title: report.title,
+      summary: report.summary,
+      status: report.status as FamilyReportThread["status"],
+      createdAt: normalizeCreatedAt(report.created_at),
+      requiresResponse: report.requires_response,
+      actions: report.family_report_actions.map((action) => ({
+        id: action.id,
+        parentId: action.parent_action_id ?? undefined,
+        authorId: action.author_id,
+        label: action.label,
+        body: action.body,
+        createdAt: normalizeCreatedAt(action.created_at),
+        tone: action.tone as FamilyReportAction["tone"]
+      }))
+    }));
   }
 
-  return (data ?? []).map((report) => ({
-    id: report.id,
-    familyId: report.family_id,
-    kind: report.kind as FamilyReportThread["kind"],
-    title: report.title,
-    summary: report.summary,
-    status: report.status as FamilyReportThread["status"],
-    createdAt: normalizeCreatedAt(report.created_at),
-    requiresResponse: report.requires_response,
-    actions: report.family_report_actions.map((action) => ({
-      id: action.id,
-      parentId: action.parent_action_id ?? undefined,
-      authorId: action.author_id,
-      label: action.label,
-      body: action.body,
-      createdAt: normalizeCreatedAt(action.created_at),
-      tone: action.tone as FamilyReportAction["tone"]
-    }))
-  }));
+  return familyReports.filter((report) => report.familyId === resolvedFamilyId);
 }
 
 export async function updateFamilyReport(input: {
@@ -129,6 +100,10 @@ export async function updateFamilyReport(input: {
     parentId?: string;
   };
 }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: input.reportId, input };
+  }
+
   const supabase = await createClient();
 
   if (input.status) {
@@ -169,6 +144,10 @@ export async function createFamilyReport(input: {
   requiresResponse?: boolean;
   actions?: FamilyReportAction[];
 }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: `report-${Date.now()}`, input };
+  }
+
   const supabase = await createClient();
   const { data: report, error: reportError } = await supabase
     .from("family_reports")

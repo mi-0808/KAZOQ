@@ -1,3 +1,5 @@
+import { places, schedules } from "@/data/mock-data";
+import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { getProfileBoardData } from "@/lib/repositories/profiles";
@@ -62,66 +64,79 @@ function buildWeekDays(schedules: ScheduleItem[]) {
 
 export async function getCalendarBoardData(): Promise<CalendarBoardData> {
   const context = await getCurrentAppContext();
-  const supabase = await createClient();
-  const [scheduleResult, placesResult, profileBoard] = await Promise.all([
-    supabase
-      .from("schedules")
-      .select("id, family_id, title, starts_at, ends_at, owner_id, place_id, type, source_message_id, note")
-      .eq("family_id", context.familyId)
-      .order("starts_at", { ascending: true })
-      .returns<
-        Pick<
-          Database["public"]["Tables"]["schedules"]["Row"],
-          "id" | "family_id" | "title" | "starts_at" | "ends_at" | "owner_id" | "place_id" | "type" | "source_message_id" | "note"
-        >[]
-      >(),
-    supabase
-      .from("place_registrations")
-      .select("id, family_id, name, category, address, lat, lng, color")
-      .eq("family_id", context.familyId)
-      .returns<
-        Pick<
-          Database["public"]["Tables"]["place_registrations"]["Row"],
-          "id" | "family_id" | "name" | "category" | "address" | "lat" | "lng" | "color"
-        >[]
-      >(),
-    getProfileBoardData(context.familyId)
-  ]);
+  const profileBoard = await getProfileBoardData(context.familyId);
 
-  if (scheduleResult.error || placesResult.error) {
-    throw scheduleResult.error ?? placesResult.error;
+  if (isSupabaseConfigured() && context.familyId) {
+    const supabase = await createClient();
+    const [scheduleResult, placesResult] = await Promise.all([
+      supabase
+        .from("schedules")
+        .select("id, family_id, title, starts_at, ends_at, owner_id, place_id, type, source_message_id, note")
+        .eq("family_id", context.familyId)
+        .order("starts_at", { ascending: true })
+        .returns<
+          Pick<
+            Database["public"]["Tables"]["schedules"]["Row"],
+            "id" | "family_id" | "title" | "starts_at" | "ends_at" | "owner_id" | "place_id" | "type" | "source_message_id" | "note"
+          >[]
+        >(),
+      supabase
+        .from("place_registrations")
+        .select("id, family_id, name, category, address, lat, lng, color")
+        .eq("family_id", context.familyId)
+        .returns<
+          Pick<
+            Database["public"]["Tables"]["place_registrations"]["Row"],
+            "id" | "family_id" | "name" | "category" | "address" | "lat" | "lng" | "color"
+          >[]
+        >()
+    ]);
+
+    if (scheduleResult.error || placesResult.error) {
+      throw scheduleResult.error ?? placesResult.error;
+    }
+
+    const realSchedules = (scheduleResult.data ?? []).map((item) => ({
+      id: item.id,
+      familyId: item.family_id,
+      title: item.title,
+      date: formatDateLabel(item.starts_at),
+      dateValue: formatDateInput(item.starts_at),
+      startTime: formatTime(item.starts_at),
+      endTime: formatTime(item.ends_at),
+      ownerId: item.owner_id ?? undefined,
+      placeId: item.place_id ?? undefined,
+      type: item.type as ScheduleItem["type"],
+      sourceMessageId: item.source_message_id ?? undefined,
+      note: item.note ?? undefined
+    }));
+
+    const realPlaces = (placesResult.data ?? []).map((item) => ({
+      id: item.id,
+      familyId: item.family_id,
+      name: item.name,
+      category: item.category as PlaceRegistration["category"],
+      address: item.address ?? "",
+      lat: item.lat ?? 0,
+      lng: item.lng ?? 0,
+      color: item.color ?? "bg-sky"
+    }));
+
+    return {
+      weekDays: buildWeekDays(realSchedules),
+      schedules: realSchedules,
+      places: realPlaces,
+      profiles: profileBoard.profiles
+    };
   }
 
-  const schedules = (scheduleResult.data ?? []).map((item) => ({
-    id: item.id,
-    familyId: item.family_id,
-    title: item.title,
-    date: formatDateLabel(item.starts_at),
-    dateValue: formatDateInput(item.starts_at),
-    startTime: formatTime(item.starts_at),
-    endTime: formatTime(item.ends_at),
-    ownerId: item.owner_id ?? undefined,
-    placeId: item.place_id ?? undefined,
-    type: item.type as ScheduleItem["type"],
-    sourceMessageId: item.source_message_id ?? undefined,
-    note: item.note ?? undefined
-  }));
-
-  const places = (placesResult.data ?? []).map((item) => ({
-    id: item.id,
-    familyId: item.family_id,
-    name: item.name,
-    category: item.category as PlaceRegistration["category"],
-    address: item.address ?? "",
-    lat: item.lat ?? 0,
-    lng: item.lng ?? 0,
-    color: item.color ?? "bg-sky"
-  }));
+  const boardSchedules = schedules.filter((item) => item.familyId === context.familyId);
+  const boardPlaces = places.filter((item) => item.familyId === context.familyId);
 
   return {
-    weekDays: buildWeekDays(schedules),
-    schedules,
-    places,
+    weekDays: buildWeekDays(boardSchedules),
+    schedules: boardSchedules,
+    places: boardPlaces,
     profiles: profileBoard.profiles
   };
 }
@@ -136,6 +151,10 @@ export async function createSchedule(input: {
   placeId?: string;
   note?: string;
 }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: `schedule-${Date.now()}`, input };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("schedules")
@@ -169,6 +188,10 @@ export async function updateSchedule(input: {
   placeId?: string;
   note?: string;
 }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: input.scheduleId, input };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("schedules")

@@ -7,10 +7,12 @@ import { signInAction, signUpAction } from "@/app/(auth)/auth/actions";
 
 export function AuthCredentialScreen({
   mode,
-  errorMessage
+  errorMessage,
+  message
 }: {
   mode: "login" | "signup";
   errorMessage?: string;
+  message?: string;
 }) {
   const isSignup = mode === "signup";
   const title = isSignup ? "アカウントを作成" : "アカウントにログイン";
@@ -55,6 +57,12 @@ export function AuthCredentialScreen({
             {errorMessage ? (
               <div className="rounded-3xl border border-coral/25 bg-coral/10 px-4 py-3 text-sm font-medium text-ink">
                 {errorMessage}
+              </div>
+            ) : null}
+
+            {message ? (
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
+                {message}
               </div>
             ) : null}
 

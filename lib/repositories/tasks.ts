@@ -1,7 +1,7 @@
+import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentAppContext } from "@/lib/repositories/app-context";
 import { FamilyTask } from "@/types/domain";
-import type { Database } from "@/types/supabase";
 
 function isMissingFamilyTasksError(error: { code?: string | null; message?: string | null } | null) {
   return error?.code === "PGRST205" || error?.message?.includes("public.family_tasks") || false;
@@ -30,14 +30,18 @@ export async function listFamilyTasks(familyId?: string): Promise<FamilyTask[]> 
   if (!resolvedFamilyId) {
     return [];
   }
+
+  if (!isSupabaseConfigured()) {
+    return [];
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("family_tasks")
     .select("id, family_id, created_by, assignee_id, title, note, due_date, status, created_at, completed_at")
     .eq("family_id", resolvedFamilyId)
     .order("status", { ascending: true })
-    .order("created_at", { ascending: false })
-    .returns<Database["public"]["Tables"]["family_tasks"]["Row"][]>();
+    .order("created_at", { ascending: false });
 
   if (error && !isMissingFamilyTasksError(error)) {
     throw error;
@@ -68,6 +72,10 @@ export async function createFamilyTask(input: {
   note?: string;
   dueDate?: string;
 }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: `task-${Date.now()}`, input };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("family_tasks")
@@ -94,6 +102,10 @@ export async function createFamilyTask(input: {
 }
 
 export async function updateFamilyTaskStatus(input: { taskId: string; status: FamilyTask["status"] }) {
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo" as const, id: input.taskId, status: input.status };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("family_tasks")
