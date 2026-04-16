@@ -1,8 +1,7 @@
 import { AuthCredentialScreen } from "@/components/shared/auth-credential-screen";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/config";
-import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedRedirectPath } from "@/lib/auth-routing";
 
 export default async function SignupPage({
   searchParams
@@ -15,14 +14,9 @@ export default async function SignupPage({
 
   if (isSupabaseConfigured()) {
     try {
-      const supabase = await createClient();
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        const context = await ensureAppUserFromSession();
-        redirect(context?.familyId ? `/rooms/${context.familyId}` : "/auth/family");
+      const redirectPath = await getAuthenticatedRedirectPath();
+      if (redirectPath) {
+        redirect(redirectPath);
       }
     } catch {
       // Keep rendering the signup form when the session cannot be resolved.

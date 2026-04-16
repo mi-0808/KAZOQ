@@ -1,5 +1,6 @@
 import { family, users } from "@/data/mock-data";
-import { isSupabaseConfigured } from "@/lib/config";
+import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/supabase";
 
@@ -27,6 +28,7 @@ function normalizeName(authUser: { email?: string | null; user_metadata?: Record
 export async function ensureAppUserFromSession() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
+    const databaseClient = isSupabaseAdminConfigured() ? createAdminClient() : supabase;
     const {
       data: { user: authUser }
     } = await supabase.auth.getUser();
@@ -42,11 +44,23 @@ export async function ensureAppUserFromSession() {
         .maybeSingle<Pick<Database["public"]["Tables"]["users"]["Row"], "id" | "email" | "name">>();
 
       if (userError) {
+        const bootstrapResult = await databaseClient
+          .from("users")
+          .select("id, email, name")
+          .eq("auth_user_id", authUser.id)
+          .limit(1)
+          .maybeSingle<Pick<Database["public"]["Tables"]["users"]["Row"], "id" | "email" | "name">>();
+
+        appUser = bootstrapResult.data ?? null;
+        userError = bootstrapResult.error ?? null;
+      }
+
+      if (userError) {
         throw userError;
       }
 
       if (!appUser) {
-        const { data: createdUser, error: createUserError } = await supabase
+        const { data: createdUser, error: createUserError } = await databaseClient
           .from("users")
           .insert({
             auth_user_id: authUser.id,
@@ -63,7 +77,7 @@ export async function ensureAppUserFromSession() {
         appUser = createdUser;
       }
 
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await databaseClient
         .from("profiles")
         .select("user_id")
         .eq("user_id", appUser.id)
@@ -75,7 +89,7 @@ export async function ensureAppUserFromSession() {
       }
 
       if (!profile) {
-        const { error: createProfileError } = await supabase.from("profiles").insert({
+        const { error: createProfileError } = await databaseClient.from("profiles").insert({
           user_id: appUser.id,
           display_name: name,
           family_role: "その他",
@@ -90,7 +104,7 @@ export async function ensureAppUserFromSession() {
         }
       }
 
-      const { data: membership, error: membershipError } = await supabase
+      const { data: membership, error: membershipError } = await databaseClient
         .from("family_members")
         .select(
           `

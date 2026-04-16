@@ -26,10 +26,15 @@ export default async function FamilySetupPage({
       redirect("/auth");
     }
 
-    const context = await ensureAppUserFromSession();
+    try {
+      const context = await ensureAppUserFromSession();
 
-    if (context?.familyId) {
-      redirect(`/rooms/${context.familyId}`);
+      if (context?.familyId) {
+        redirect(`/rooms/${context.familyId}`);
+      }
+    } catch {
+      // Allow authenticated users to continue to the family setup screen
+      // even if app-context bootstrap has not completed yet.
     }
 
     return <FamilyRoomSetupScreen accountLabel={user.email ?? undefined} errorMessage={errorMessage} />;

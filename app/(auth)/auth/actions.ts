@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { revalidatePath } from "next/cache";
 import { family } from "@/data/mock-data";
-import { isSupabaseConfigured } from "@/lib/config";
+import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/config";
 import { sanitizeFamilyPreferences } from "@/lib/family-preferences";
 import { ensureAppUserFromSession } from "@/lib/repositories/app-context";
 import { getSiteUrl } from "@/lib/site-url";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 function redirectWithError(message: string, path = "/auth") {
@@ -93,6 +94,24 @@ export async function signUpAction(formData: FormData) {
       redirectWithError("メールアドレスとパスワードを入力してください。", errorPath);
     }
 
+    if (isSupabaseAdminConfigured()) {
+      const admin = createAdminClient();
+      const { data: existingUser, error: existingUserError } = await admin
+        .from("users")
+        .select("id")
+        .eq("email", email)
+        .limit(1)
+        .maybeSingle<{ id: string }>();
+
+      if (existingUserError) {
+        throw existingUserError;
+      }
+
+      if (existingUser) {
+        redirectWithError("このメールアドレスはすでに登録されています。ログインしてください。", errorPath);
+      }
+    }
+
     const supabase = await createClient();
     const {
       data: { session },
@@ -109,6 +128,9 @@ export async function signUpAction(formData: FormData) {
     });
 
     if (error) {
+      if (error.message.includes("registered") || error.message.includes("exists") || error.message.includes("already")) {
+        redirectWithError("このメールアドレスはすでに登録されています。ログインしてください。", errorPath);
+      }
       redirectWithError(error.message, errorPath);
     }
 
