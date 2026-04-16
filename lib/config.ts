@@ -1,18 +1,20 @@
 import { cookies } from "next/headers";
+import { getSupabaseServerEnv } from "@/lib/server-env";
 
 export type AppMode = "auto" | "demo" | "live";
 
 export const APP_MODE_COOKIE = "kazoq-mode";
 
 export function isSupabaseConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  );
+  const { url, clientKey } = getSupabaseServerEnv();
+
+  return Boolean(url && clientKey);
 }
 
 export function isSupabaseAdminConfigured() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { url, serviceRoleKey } = getSupabaseServerEnv();
+
+  return Boolean(url && serviceRoleKey);
 }
 
 export function normalizeAppMode(value?: string | null): AppMode {
